@@ -1,16 +1,27 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {Barber} from '@/entities/Barber';
 import ManagementSection from '@/components/ManagementSection';
 import {getTranslations} from '@/translations';
 import {Alert, Snackbar} from '@mui/material';
+import Cookies from 'js-cookie';
 
 const t = getTranslations(true);
 
 export default function BarbersManagement() {
     const [barbers, setBarbers] = useState([]);
     const [snackbar, setSnackbar] = useState({open: false, message: "", severity: "success"});
+
+    const userData = useMemo(() => {
+        const userData = Cookies.get("userData");
+
+        if (userData) {
+            return JSON.parse(decodeURI(userData));
+        }
+
+        return null;
+    }, []);
 
     useEffect(() => {
         loadBarbers();
@@ -19,7 +30,7 @@ export default function BarbersManagement() {
     const loadBarbers = async () => {
         try {
             const barbersList = await Barber.getAll();
-            setBarbers(barbersList);
+            setBarbers(barbersList.filter((b) => userData.role === 'ADMIN' || b.id === userData.id));
         } catch (error) {
             setError('Failed to load barbers');
         }

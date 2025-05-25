@@ -71,7 +71,7 @@ export async function POST(request) {
                         phone_number,
                         firstName: first_name,
                         lastName: last_name,
-                        role: 'barber'
+                        role: 'BARBER'
                     }
                 });
             } catch (error) {
