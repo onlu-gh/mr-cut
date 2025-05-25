@@ -1,6 +1,6 @@
 "use client";
 
-import {useState, useEffect, useCallback} from "react";
+import {useState, useEffect, useCallback, useMemo} from "react";
 import {useRouter} from "next/navigation";
 import Cookies from "js-cookie";
 import {Appointment} from "@/entities/Appointment";
@@ -22,12 +22,25 @@ export default function AppointmentsManagementPage() {
         new Date().toISOString().split("T")[0]
     );
 
+    const userData = useMemo(() => {
+        const userData = Cookies.get("userData");
+
+        if (userData) {
+            return JSON.parse(decodeURI(userData));
+        }
+
+        return null;
+    }, []);
+
     const loadAppointments = useCallback(async () => {
         try {
             const appointmentsList = await Appointment.getAll({
                 date: selectedDate,
             });
-            setAppointments(appointmentsList.sort((a, b) => new Date(`${a.date.split("T")[0]}T${a.time}`).getTime() - new Date(`${b.date.split("T")[0]}T${b.time}`).getTime()));
+
+            let filteredAppointments = userData.role === "BARBER" ? appointmentsList.filter((a)=>a.barberId === userData.id) : appointmentsList;
+            setAppointments(filteredAppointments.sort((a, b) => new Date(`${a.date.split("T")[0]}T${a.time}`).getTime() - new Date(`${b.date.split("T")[0]}T${b.time}`).getTime()));
+
             setError(null);
         } catch (error) {
             setError("Failed to load appointments");
