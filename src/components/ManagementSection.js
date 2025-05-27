@@ -117,7 +117,7 @@ export default function ManagementSection({
                 </TableCell>
               ))}
               <TableCell align="right">
-                <Button onClick={() => handleOpenDialog(item)}>ערוך</Button>
+                {!!onEdit && <Button onClick={() => handleOpenDialog(item)}>ערוך</Button>}
                 <Button onClick={() => onDelete(item.id)}>מחק</Button>
               </TableCell>
             </TableRow>
