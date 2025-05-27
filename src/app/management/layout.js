@@ -25,7 +25,7 @@ export default function ManagementLayout({ children }) {
 
     const { userType } = JSON.parse(userData);
     if (userType !== 'barber' && userType !== 'admin') {
-      router.push('/dashboard');
+      router.push('/home');
     }
   }, [router]);
 

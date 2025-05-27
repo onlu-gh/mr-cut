@@ -133,7 +133,7 @@ export default function ManagementSection({
         <Typography variant="h4" component="h1">
           {title}
         </Typography>
-        {!isMobile && (
+        {(!isMobile && !!onAdd) && (
           <Button variant="contained"
             onClick={() => handleOpenDialog()}>
             <Add />
@@ -144,7 +144,7 @@ export default function ManagementSection({
 
       {isMobile ? renderMobileView() : renderDesktopView()}
 
-      {isMobile && (
+      {(isMobile  && !!onAdd) && (
         <Button
           variant="contained"
           startIcon={<Add />}

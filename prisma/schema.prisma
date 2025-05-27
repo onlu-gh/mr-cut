@@ -36,7 +36,6 @@ model Barber {
 model Service {
   id              String   @id @default(cuid())
   name            String
-  description     String
   duration_minutes Int
   price           Float
   created_at      DateTime @default(now())
@@ -46,6 +45,7 @@ model Service {
 
 model Appointment {
   id                    String   @id @default(cuid())
+  client_id             String   @default("X")
   client_name           String
   client_phone_number   String
   barber_id             String

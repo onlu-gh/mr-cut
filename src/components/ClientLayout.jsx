@@ -73,8 +73,9 @@ export default function ClientLayout({children, currentPageName}) {
     useEffect(() => {
         if (currentUser) {
             let tempNavigation = [
-                {name: t.home, href: "/dashboard"},
+                {name: t.home, href: "/home"},
                 {name: t.bookNow, href: "/book"},
+                {name: t.dashboard, href: "/customer/dashboard"},
                 {name: t.about, href: "/about"},
             ];
 
@@ -140,7 +141,7 @@ export default function ClientLayout({children, currentPageName}) {
                 <AppBar position="fixed" sx={{bgcolor: '#2D5043', zIndex: 1200}}>
                     <Toolbar>
                         <Box sx={{flexGrow: 1, display: 'flex', alignItems: 'center'}}>
-                            <Link href="/" style={{display: 'flex', alignItems: 'center'}}>
+                            <Link href={`/${currentUser?.role.toUpperCase() === "CUSTOMER" ? 'home' : 'management'}`} style={{display: 'flex', alignItems: 'center'}}>
                                 <Image
                                     src="/mrcut.png"
                                     alt="Mr. Cut"

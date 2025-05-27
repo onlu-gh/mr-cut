@@ -26,10 +26,10 @@ export async function PUT(request, {params}) {
         console.log('Received update request:', {id, body});
 
         // Validate required fields
-        const {client_name, client_phone_number, date, time, barber_id, service_id} = body;
-        if (!(client_name && client_phone_number && barber_id && date && time && service_id)) {
+        const {client_id, client_name, client_phone_number, date, time, barber_id, service_id} = body;
+        if (!(client_id && client_name && client_phone_number && barber_id && date && time && service_id)) {
             return NextResponse.json(
-                {error: 'date, time, serviceId, and service are required'},
+                {error: 'client_id, client_name, client_phone_number, barber_id, date, time and serviceId are required'},
                 {status: 400}
             );
         }
@@ -47,6 +47,7 @@ export async function PUT(request, {params}) {
         const appointment = await prisma.appointment.update({
                                                                 where: {id},
                                                                 data: {
+                                                                    client_id,
                                                                     client_name,
                                                                     client_phone_number,
                                                                     date: new Date(date).toISOString(),

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import {TextField, Button, Box, Typography, Container, Alert} from '@mui/material';
 import Cookies from 'js-cookie';
 
-export default function Home() {
+export default function Login() {
     const router = useRouter();
     const [phone_number, setPhoneNumber] = useState('');
     const [error, setError] = useState('');
@@ -63,7 +63,7 @@ export default function Home() {
             if (data.user.role === 'BARBER' || data.user.role === 'ADMIN') {
                 router.push('/management');
             } else {
-                router.push('/dashboard');
+                router.push('/home');
             }
         } catch (err) {
             setError(err.message);
