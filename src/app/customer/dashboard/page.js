@@ -72,22 +72,6 @@ export default function CustomerAppointmentsManagementPage() {
         loadBarbers();
     }, [loadAppointments, router]);
 
-    const handleEdit = async (id, formData) => {
-        try {
-            const {barberId, serviceId} = formData;
-
-            await new Appointment({
-                ...formData,
-                barber: barbers.find(b => b.id === barberId),
-                service: services.find(s => s.id === serviceId),
-                id,
-            }).save();
-            await loadAppointments();
-        } catch (error) {
-            setError("Failed to update appointment");
-        }
-    };
-
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this appointment?")) {
             try {
@@ -274,7 +258,7 @@ export default function CustomerAppointmentsManagementPage() {
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold">{t.appointmentManagement}</h1>
+                <h1 className="text-2xl font-bold">{t.myAppointments}</h1>
             </div>
 
             {error && (
@@ -291,7 +275,6 @@ export default function CustomerAppointmentsManagementPage() {
                 title=""
                 items={appointments}
                 fields={appointmentFields}
-                onEdit={handleEdit}
                 onDelete={handleDelete}
                 columns={appointmentColumns}
                 getDetails={getAppointmentDetails}
