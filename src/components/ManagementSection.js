@@ -85,7 +85,7 @@ export default function ManagementSection({
             <ManagementCard
               title={columns[0].valueGetter ? columns[0].valueGetter({ row: item }) : item[columns[0].field]}
               details={getDetails(item)}
-              onEdit={() => handleOpenDialog(item)}
+              onEdit={!!onEdit ? (() => handleOpenDialog(item)) : null}
               onDelete={() => onDelete(item.id)}
               workingHours={item.workingHours}
             />
