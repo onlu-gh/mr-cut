@@ -8,21 +8,18 @@ export async function GET(request) {
     try {
         const {searchParams} = new URL(request.url);
         const barberId = searchParams.get('barberId');
+        const clientId = searchParams.get('clientId');
         const date = searchParams.get('date');
-
-        if (!date) {
-            return NextResponse.json(
-                {error: 'Date is required'},
-                {status: 400}
-            );
-        }
 
         const appointments = await prisma.appointment.findMany({
             where: {
                 ...barberId && {barber_id: barberId},
-                date: {
-                    gte: new Date(date),
-                    lt: new Date(new Date(date).setDate(new Date(date).getDate() + 1))
+                ...clientId && {client_id: clientId},
+                ...date && {
+                    date: {
+                        gte: new Date(date),
+                        lt: new Date(new Date(date).setDate(new Date(date).getDate() + 1))
+                    }
                 }
             },
             include: {
@@ -54,9 +51,9 @@ export async function POST(request) {
     try {
         const data = await request.json();
 
-        const {client_name, client_phone_number, barber_id, service_id, date, time, status} = data;
+        const {client_id, client_name, client_phone_number, barber_id, service_id, date, time, status} = data;
 
-        if(!(client_name && client_phone_number && barber_id && service_id && date && time)){
+        if(!(client_id && client_name && client_phone_number && barber_id && service_id && date && time)){
             return NextResponse.json(
                 {error: 'Missing appointment details'},
                 {status: 400}
@@ -81,6 +78,7 @@ export async function POST(request) {
         // Create the appointment using Prisma
         const appointment = await prisma.appointment.create({
             data: {
+                client_id,
                 client_name,
                 client_phone_number,
                 barber_id,

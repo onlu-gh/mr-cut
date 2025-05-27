@@ -12,15 +12,12 @@ import {Barber} from "@/entities/Barber";
 
 const t = getTranslations(true);
 
-export default function AppointmentsManagementPage() {
+export default function CustomerAppointmentsManagementPage() {
     const router = useRouter();
     const [appointments, setAppointments] = useState([]);
     const [services, setServices] = useState([]);
     const [barbers, setBarbers] = useState([]);
     const [error, setError] = useState(null);
-    const [selectedDate, setSelectedDate] = useState(
-        new Date().toISOString().split("T")[0]
-    );
 
     const userData = useMemo(() => {
         const userData = Cookies.get("userData");
@@ -34,18 +31,18 @@ export default function AppointmentsManagementPage() {
 
     const loadAppointments = useCallback(async () => {
         try {
-            const appointmentsList = await Appointment.getAll({
-                date: selectedDate,
+            const appointmentsList = await Appointment.getAllByCustomerId({
+                clientId: userData.id,
             });
 
-            let filteredAppointments = userData.role === "BARBER" ? appointmentsList.filter((a)=>a.barberId === userData.id) : appointmentsList;
+            let filteredAppointments = userData.role === "BARBER" ? appointmentsList.filter((a) => a.barberId === userData.id) : appointmentsList;
             setAppointments(filteredAppointments.sort((a, b) => new Date(`${a.date.split("T")[0]}T${a.time}`).getTime() - new Date(`${b.date.split("T")[0]}T${b.time}`).getTime()));
 
             setError(null);
         } catch (error) {
             setError("Failed to load appointments");
         }
-    }, [selectedDate]);
+    }, [userData]);
 
     const loadServices = async () => {
         try {
@@ -70,35 +67,14 @@ export default function AppointmentsManagementPage() {
             return;
         }
 
-        const {userType} = JSON.parse(userData);
-        if (userType !== "barber" && userType !== "admin") {
-            router.push("/home");
-            return;
-        }
-
         loadAppointments();
         loadServices();
         loadBarbers();
     }, [loadAppointments, router]);
 
-    const handleDateChange = (event) => {
-        setSelectedDate(event.target.value);
-    };
-
-    const handleAdd = async (formData) => {
-        try {
-            await new Appointment(formData).save();
-            await loadAppointments();
-        } catch (error) {
-            setError("Failed to save appointment");
-        }
-    };
-
     const handleEdit = async (id, formData) => {
         try {
             const {barberId, serviceId} = formData;
-
-            console.log(formData);
 
             await new Appointment({
                 ...formData,
@@ -287,9 +263,9 @@ export default function AppointmentsManagementPage() {
     ];
 
     const initialFormData = {
+        clientId: '',
         clientName: '',
         clientPhoneNumber: '',
-        date: selectedDate,
         time: "",
         serviceId: services[0]?.id,
         barberId: barbers[0]?.id,
@@ -299,18 +275,6 @@ export default function AppointmentsManagementPage() {
         <div className="space-y-4">
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold">{t.appointmentManagement}</h1>
-                <div className="flex items-center space-x-4">
-                    <label htmlFor="date" className="text-sm font-medium text-gray-700">
-                        Select Date:
-                    </label>
-                    <input
-                        type="date"
-                        id="date"
-                        value={selectedDate}
-                        onChange={handleDateChange}
-                        className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    />
-                </div>
             </div>
 
             {error && (
@@ -323,24 +287,10 @@ export default function AppointmentsManagementPage() {
                 </div>
             )}
 
-            {!error && appointments.length === 0 && (
-                <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
-                    <div className="flex">
-                        <div className="ml-3">
-                            <p className="text-sm text-blue-700">
-                                אין תורים בתאריך{" "}
-                                {format(new Date(selectedDate), "d/MM/yyyy")}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             <ManagementSection
                 title=""
                 items={appointments}
                 fields={appointmentFields}
-                onAdd={handleAdd}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 columns={appointmentColumns}

@@ -30,10 +30,12 @@ import {
 import AvailableSlotsCard from "@/components/AvailableSlotsCard";
 import Cookies from "js-cookie";
 import {getTranslations} from "@/translations";
+import {useRouter} from 'next/navigation';
 
 export default function BookPage() {
     const isHebrew = true;
     const t = getTranslations(isHebrew);
+    const router = useRouter();
 
     const [services, setServices] = useState([]);
     const [barbers, setBarbers] = useState([]);
@@ -93,24 +95,32 @@ export default function BookPage() {
         try {
             setIsLoading(true);
 
-            const appointment = new Appointment({
-                clientName: name,
-                clientPhoneNumber: phone,
-                serviceId: selectedServiceId,
-                barberId: selectedBarber?.id,
-                date: selectedDate,
-                time: selectedTime,
-                customerName: name,
-                customerPhone: phone,
-            });
+            const userData = Cookies.get("userData");
 
-            await appointment.save();
-            setShowConfirmation(false);
-            setSnackbar({
-                open: true,
-                message: t.appointmentBookedSuccess,
-                severity: "success"
-            });
+            if (userData) {
+                const appointment = new Appointment({
+                    clientId: JSON.parse(decodeURI(userData)).id,
+                    clientName: name,
+                    clientPhoneNumber: phone,
+                    serviceId: selectedServiceId,
+                    barberId: selectedBarber?.id,
+                    date: selectedDate,
+                    time: selectedTime,
+                    customerName: name,
+                    customerPhone: phone,
+                });
+
+                await appointment.save();
+                setShowConfirmation(false);
+                setSnackbar({
+                    open: true,
+                    message: t.appointmentBookedSuccess,
+                    severity: "success",
+                });
+                setTimeout(()=>{
+                    router.push('/customer/dashboard');
+                }, 2000);
+            }
         } catch (error) {
             console.error("Error creating appointment:", error);
             setSnackbar({
@@ -118,7 +128,7 @@ export default function BookPage() {
                 message: t.failedToBook,
                 severity: "error"
             });
-        } finally {
+
             setIsLoading(false);
         }
     };
@@ -311,10 +321,8 @@ export default function BookPage() {
             <Snackbar
                 open={snackbar.open}
                 autoHideDuration={6000}
-                onClose={() => setSnackbar({...snackbar, open: false})}
             >
                 <Alert
-                    onClose={() => setSnackbar({...snackbar, open: false})}
                     severity={snackbar.severity}
                     sx={{width: '100%'}}
                 >
