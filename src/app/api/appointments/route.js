@@ -8,13 +8,13 @@ export async function GET(request) {
     try {
         const {searchParams} = new URL(request.url);
         const barberId = searchParams.get('barberId');
-        const clientId = searchParams.get('clientId');
+        const clientPhoneNumber = searchParams.get('clientPhoneNumber');
         const date = searchParams.get('date');
 
         const appointments = await prisma.appointment.findMany({
             where: {
                 ...barberId && {barber_id: barberId},
-                ...clientId && {client_id: clientId},
+                ...clientPhoneNumber && {client_phone_number: clientPhoneNumber},
                 ...date && {
                     date: {
                         gte: new Date(date),
@@ -51,9 +51,9 @@ export async function POST(request) {
     try {
         const data = await request.json();
 
-        const {client_id, client_name, client_phone_number, barber_id, service_id, date, time, status} = data;
+        const {client_name, client_phone_number, barber_id, service_id, date, time, status} = data;
 
-        if(!(client_id && client_name && client_phone_number && barber_id && service_id && date && time)){
+        if(!(client_name && client_phone_number && barber_id && service_id && date && time)){
             return NextResponse.json(
                 {error: 'Missing appointment details'},
                 {status: 400}
@@ -78,7 +78,6 @@ export async function POST(request) {
         // Create the appointment using Prisma
         const appointment = await prisma.appointment.create({
             data: {
-                client_id,
                 client_name,
                 client_phone_number,
                 barber_id,

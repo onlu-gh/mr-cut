@@ -45,7 +45,6 @@ model Service {
 
 model Appointment {
   id                    String   @id @default(cuid())
-  client_id             String   @default("X")
   client_name           String
   client_phone_number   String
   barber_id             String

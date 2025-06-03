@@ -31,10 +31,10 @@ export class Appointment {
         }
     }
 
-    static async getAllByCustomerId({clientId} = {}) {
+    static async getAllByClientPhoneNumber({clientPhoneNumber} = {}) {
         try {
             const url = new URL('/api/appointments', window.location.origin);
-            if (clientId) url.searchParams.append('clientId', clientId);
+            if (clientPhoneNumber) url.searchParams.append('clientPhoneNumber', clientPhoneNumber);
 
             const response = await fetch(url);
             if (!response.ok) throw new Error('Failed to fetch appointments');
@@ -71,7 +71,6 @@ export class Appointment {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    client_id: this.clientId,
                     client_name: this.clientName,
                     client_phone_number: this.clientPhoneNumber,
                     date: this.date,
