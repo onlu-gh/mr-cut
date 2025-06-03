@@ -31,8 +31,8 @@ export default function CustomerAppointmentsManagementPage() {
 
     const loadAppointments = useCallback(async () => {
         try {
-            const appointmentsList = await Appointment.getAllByCustomerId({
-                clientId: userData.id,
+            const appointmentsList = await Appointment.getAllByClientPhoneNumber({
+                clientPhoneNumber: userData.phone_number,
             });
 
             let filteredAppointments = userData.role === "BARBER" ? appointmentsList.filter((a) => a.barberId === userData.id) : appointmentsList;
