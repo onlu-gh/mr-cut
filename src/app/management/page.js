@@ -1,10 +1,12 @@
 'use client';
 
-import {useEffect, useState} from 'react';
-import {Box, Button, Card, CardActions, CardContent, Chip, Divider, Grid, Paper, Typography} from '@mui/material';
-import {Calendar, Clock, Scissors, User} from 'lucide-react';
+import {format, isBefore, setHours, setMinutes, startOfWeek} from "date-fns";
+import React, {useEffect, useState} from 'react';
+import {Box, Button, Card, CardActions, CardContent, Grid, Typography} from '@mui/material';
+import {Calendar, Scissors, User} from 'lucide-react';
 import Cookies from 'js-cookie';
 import {getTranslations} from '@/translations';
+import WeekView from '@/components/WeekView/WeekView';
 
 const t = getTranslations(true);
 
@@ -90,62 +92,33 @@ export default function ManagementDashboard() {
                 </Typography>
             )}
 
-
-            {/* Next Appointment */}
-            {upcomingAppointments.length === 0 ? (
-                <Paper sx={{p: 3, mb: 3}}>
-                    <Typography variant="h5" gutterBottom>אין תורים קרובים להיום</Typography>
-                </Paper>
-            ) : (
-                <Paper sx={{p: 3, mb: 3}}>
-                    <Typography variant="h5" gutterBottom>
-                        התור הבא
-                    </Typography>
-                    <Divider sx={{mb: 2}}/>
-                    <Card
-                        sx={{
-                            minWidth: '280px',
-                            width: '100%'
-                        }}
-                    >
-                        <CardContent>
-                            <Box sx={{display: 'flex', justifyContent: 'space-between', mb: 1}}>
-                                <Typography variant="subtitle1">
-                                    {upcomingAppointments[0].customerName}
-                                </Typography>
-                                <Chip
-                                    label={upcomingAppointments[0].status}
-                                    size="small"
-                                    color={upcomingAppointments[0].status === 'confirmed' ? 'success' : 'warning'}
-                                />
-                            </Box>
-                            <Box sx={{display: 'flex', alignItems: 'center', mb: 1}}>
-                                <Clock size={16} style={{marginRight: 8}}/>
-                                <Typography variant="body2">
-                                    {new Date(upcomingAppointments[0].dateTime).toLocaleString()}
-                                </Typography>
-                            </Box>
-                            <Box sx={{display: 'flex', alignItems: 'center', mb: 1}}>
-                                <Scissors size={16} style={{marginRight: 8}}/>
-                                <Typography variant="body2">
-                                    {upcomingAppointments[0].serviceName}
-                                </Typography>
-                            </Box>
-                            <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                <User size={16} style={{marginRight: 8}}/>
-                                <Typography variant="body2">
-                                    {upcomingAppointments[0].barberName}
-                                </Typography>
-                            </Box>
-                        </CardContent>
-                        <CardActions>
-                            <Button size="small" href={`/management/appointments/${upcomingAppointments[0].id}`}>
-                                View Details
-                            </Button>
-                        </CardActions>
-                    </Card>
-                </Paper>
-            )}
+            <WeekView
+                initialDate={new Date()}
+                weekStartsOn={0}
+                disabledCell={(date) => {
+                    return isBefore(date, new Date());
+                }}
+                disabledWeek={(startDayOfWeek) => {
+                    return isBefore(startDayOfWeek, startOfWeek(new Date()));
+                }}
+                events={[
+                    {
+                        id: "1",
+                        title: "Meeting",
+                        startDate: setMinutes(setHours(new Date(), 15), 15),
+                        endDate: setMinutes(setHours(new Date(), 16), 20),
+                    },
+                ]}
+                onCellClick={(cell) => alert(`Clicked ${format(cell.date, "Pp")}`)}
+                onEventClick={(event) =>
+                    alert(
+                        `${event.title} ${format(event.startDate, "Pp")} - ${format(
+                            event.endDate,
+                            "Pp"
+                        )}`
+                    )
+                }
+            />
 
             <Grid container spacing={3}>
                 {/* Management Cards */}
