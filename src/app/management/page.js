@@ -7,6 +7,8 @@ import {Calendar, Scissors, User} from 'lucide-react';
 import Cookies from 'js-cookie';
 import {getTranslations} from '@/translations';
 import WeekView from '@/components/WeekView/WeekView';
+import localizeIL from '@/lib/he-IL-localize';
+import {Barber} from '@/entities/Barber';
 
 const t = getTranslations(true);
 
@@ -14,20 +16,41 @@ export default function ManagementDashboard() {
     const [upcomingAppointments, setUpcomingAppointments] = useState([]);
     const [error, setError] = useState(null);
     const [user, setUser] = useState(null);
+    const [barbers, setBarbers] = useState(undefined);
+    const [selectedBarber, setSelectedBarber] = useState(null);
 
     useEffect(() => {
-        loadAppointments();
+        const userData = JSON.parse(Cookies.get('userData') || '{}');
+        setUser(userData);
+
+        if (!userData.id || (userData.role !== 'ADMIN' && userData.role !== 'BARBER')) {
+            throw new Error('לא נמצא מידע עבור המשתמש המחובר');
+        } else {
+            void loadAppointments(userData);
+
+            (async function () {
+                if (userData.role === 'ADMIN') {
+                    const barbers = await loadBarbers();
+                    setBarbers(barbers);
+                    setSelectedBarber(barbers.find((b) => b.id === userData.id));
+                } else if (userData.role === 'BARBER') {
+                    setSelectedBarber(await Barber.getById(userData.id));
+                }
+            })();
+        }
     }, []);
 
-    const loadAppointments = async () => {
+    const loadBarbers = async () => {
+        try {
+            return await Barber.getAll();
+        } catch (error) {
+            setError('Failed to load barbers');
+        }
+    };
+
+    const loadAppointments = async (userData) => {
         try {
             // Get user data from cookie
-            const userData = JSON.parse(Cookies.get('userData') || '{}');
-            setUser(userData);
-
-            if (!userData.id || (userData.role !== 'ADMIN' && userData.role !== 'BARBER')) {
-                throw new Error('לא נמצא מידע עבור המשתמש המחובר');
-            }
 
             // Get today's date in YYYY-MM-DD format
             const today = new Date().toISOString().split('T')[0];
@@ -93,6 +116,10 @@ export default function ManagementDashboard() {
             )}
 
             <WeekView
+                barbers={barbers}
+                selectedBarberId={selectedBarber?.id}
+                onBarberChange={setSelectedBarber}
+                locale={{code: 'he-IL', localize: localizeIL}}
                 initialDate={new Date()}
                 weekStartsOn={0}
                 disabledCell={(date) => {

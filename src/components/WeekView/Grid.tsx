@@ -1,5 +1,5 @@
-import { ReactNode } from "react";
-import { getMinutes, getUnixTime } from "date-fns";
+import {ReactNode} from "react";
+import {getMinutes, getUnixTime} from "date-fns";
 import {Cell, Days} from './use-weekview';
 
 export default function Grid({
@@ -25,7 +25,7 @@ export default function Grid({
                 day.cells.map((cell, cellIndex) => (
                     <button
                         key={getUnixTime(cell.date)}
-                        className="relative border-t border-l border-gray-100 transition-colors cursor-pointer hover:bg-slate-100 disabled:bg-slate-50"
+                        className="relative border-t border-l border-gray-100 transition-colors cursor-pointer hover:bg-slate-100 disabled:bg-slate-100"
                         style={{
                             gridRowStart: cellIndex + 1,
                             gridRowEnd: cellIndex + 2,
@@ -33,8 +33,7 @@ export default function Grid({
                             gridColumnEnd: dayIndex + 2,
                         }}
                         disabled={cell.disabled}
-                        onClick={() => onCellClick?.(cell)}
-                    >
+                        onClick={() => onCellClick?.(cell)}>
                         {CellContent && CellContent(cell)}
                     </button>
                 ))
@@ -60,7 +59,7 @@ export default function Grid({
                                     gridRowEnd: cellIndex + 2,
                                 }}
                             >
-                <span className="absolute top-0 left-0 text-xs text-slate-400 px-1">
+                <span className="absolute top-0 right-0 text-xs text-slate-400 px-1">
                   {cell.hourAndMinute}
                 </span>
                             </div>
