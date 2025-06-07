@@ -4,7 +4,7 @@ import {Days} from './use-weekview';
 export default function DaysHeader({days}: { days: Days }) {
     return (
         <div className="sticky top-0 z-30 flex-none bg-white shadow">
-            <div className={`grid ${"grid-cols-" + days.length} text-sm leading-6 text-slate-500`}>
+            <div className={`grid grid-cols text-sm leading-6 text-slate-500`} style={{gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))`}}>
                 {days.map((day, index) => (
                     <div key={getUnixTime(day.date)}
                          className={`

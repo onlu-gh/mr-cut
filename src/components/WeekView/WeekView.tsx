@@ -1,6 +1,6 @@
 import {Day, isSameWeek, Locale} from "date-fns";
 
-import useWeekView, {Cell} from "./use-weekview";
+import useWeekView, {Cell, WorkingHours} from "./use-weekview";
 import Header from "./Header";
 import DaysHeader from "./DaysHeader";
 import Grid from "./Grid";
@@ -19,6 +19,7 @@ export default function WeekView({
                                      barbers,
                                      onBarberChange,
                                      initialDate,
+                                     getWeeklySchedule,
                                      minuteStep = 30,
                                      weekStartsOn = 1,
                                      locale,
@@ -34,6 +35,7 @@ export default function WeekView({
     barbers?: Barber[];
     onBarberChange?: (barber: Barber) => void;
     initialDate?: Date;
+    getWeeklySchedule?: (startDayOfWeek: Date) => WorkingHours[];
     minuteStep?: number;
     weekStartsOn?: Day;
     locale?: Locale;
@@ -45,8 +47,9 @@ export default function WeekView({
     onCellClick?: (cell: Cell) => void;
     onEventClick?: (event: Event) => void;
 }) {
-    const {days:sevenDays, nextWeek, previousWeek, goToToday, viewTitle} = useWeekView({
+    const {days: sevenDays, nextWeek, previousWeek, goToToday, viewTitle} = useWeekView({
         initialDate,
+        getWeeklySchedule,
         minuteStep,
         weekStartsOn,
         locale,

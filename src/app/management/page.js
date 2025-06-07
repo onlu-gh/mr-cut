@@ -120,8 +120,8 @@ export default function ManagementDashboard() {
                 selectedBarberId={selectedBarber?.id}
                 onBarberChange={setSelectedBarber}
                 locale={{code: 'he-IL', localize: localizeIL}}
-                initialDate={new Date()}
                 weekStartsOn={0}
+                getWeeklySchedule={(startDayOfWeek) => selectedBarber && Object.values(selectedBarber.workingHours)}
                 disabledCell={(date) => {
                     return isBefore(date, new Date());
                 }}
@@ -132,8 +132,8 @@ export default function ManagementDashboard() {
                     {
                         id: "1",
                         title: "Meeting",
-                        startDate: setMinutes(setHours(new Date(), 15), 15),
-                        endDate: setMinutes(setHours(new Date(), 16), 20),
+                        startDate: setMinutes(setHours(new Date(), 18), 30),
+                        endDate: setMinutes(setHours(new Date(), 19), 30),
                     },
                 ]}
                 onCellClick={(cell) => alert(`Clicked ${format(cell.date, "Pp")}`)}
