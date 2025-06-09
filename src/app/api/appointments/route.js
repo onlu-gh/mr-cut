@@ -9,16 +9,17 @@ export async function GET(request) {
         const {searchParams} = new URL(request.url);
         const barberId = searchParams.get('barberId');
         const clientPhoneNumber = searchParams.get('clientPhoneNumber');
-        const date = searchParams.get('date');
+        const startDate = searchParams.get('startDate');
+        const endDate = searchParams.get('endDate');
 
         const appointments = await prisma.appointment.findMany({
             where: {
                 ...barberId && {barber_id: barberId},
                 ...clientPhoneNumber && {client_phone_number: clientPhoneNumber},
-                ...date && {
+                ...(startDate || endDate) && {
                     date: {
-                        gte: new Date(date),
-                        lt: new Date(new Date(date).setDate(new Date(date).getDate() + 1))
+                        ...startDate && {gte: new Date(startDate).toISOString()},
+                        ...endDate && {lte: new Date(endDate).toISOString()},
                     }
                 }
             },
