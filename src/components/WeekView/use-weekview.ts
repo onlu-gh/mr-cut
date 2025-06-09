@@ -66,8 +66,6 @@ export default function useWeekView({
         }
     }, [getWeeklySchedule, startOfTheWeek]);
 
-    console.log(weeklySchedule);
-
     const weekDaysAmount = weeklySchedule.weekDaysAmount ?? DEFAULT_WEEK_DAYS_AMOUNT;
 
     const nextWeek = () => {
@@ -143,6 +141,7 @@ export default function useWeekView({
     const weekNumber = format(days[0].date, "w", {locale});
 
     return {
+        startOfTheWeek,
         nextWeek,
         previousWeek,
         goToToday,

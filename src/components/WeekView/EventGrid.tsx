@@ -1,11 +1,4 @@
-import {
-    Locale,
-    format,
-    getDay,
-    getHours,
-    getMinutes,
-    isSameWeek, Day,
-} from "date-fns";
+import {Day, getDay, getHours, getMinutes, isSameWeek, Locale,} from "date-fns";
 import {Days} from './use-weekview';
 import {Event} from './WeekView';
 
@@ -13,7 +6,6 @@ export default function EventGrid({
                                       days,
                                       events,
                                       weekStartsOn,
-                                      locale,
                                       minuteStep,
                                       rowHeight,
                                       onEventClick,
@@ -52,9 +44,13 @@ export default function EventGrid({
                             rowHeight) %
                         rowHeight;
 
+                    const eventHeight = rowHeight - (paddingTop + paddingBottom);
+                    // console.log(rowHeight);
+                    // console.log(eventHeight);
+
                     return (
                         <div key={event.id}
-                             className="relative flex mt-[1px] transition-all"
+                             className="relative flex transition-all"
                              style={{
                                  gridRowStart: start,
                                  gridRowEnd: end,
@@ -63,24 +59,27 @@ export default function EventGrid({
                              }}
                         >
                               <span
-                                  className="absolute inset-1 flex flex-col overflow-y-auto rounded-md p-2 text-xs leading-5 bg-[#B87333] border border-transparent border-dashed hover:bg-[#c8894c] transition cursor-pointer"
+                                  className={`absolute inset-0 flex flex-col justify-center items-center rounded-md text-sm leading-none border border-transparent border-dashed bg-[#B87333] hover:bg-[#c8894c] transition cursor-pointer`}
                                   style={{
-                                      top: paddingTop + 4,
-                                      bottom: paddingBottom + 4,
+                                      height: eventHeight,
                                   }}
                                   onClick={() => onEventClick?.(event)}>
-                                    <p className="text-white leading-4">
-                                      {format(new Date(event.startDate), "H:mm", {
-                                          weekStartsOn,
-                                          locale,
-                                      })}
-                                        -
-                                        {format(new Date(event.endDate), "H:mm", {
-                                            weekStartsOn,
-                                            locale,
-                                        })}
-                                    </p>
-                                    <p className="font-semibold text-white">{event.title}</p>
+                                    {/*{*/}
+                                    {/*    eventLength >= minuteStep && (*/}
+                                    {/*        <p className="text-white leading-4 text-sm">*/}
+                                    {/*            {format(new Date(event.startDate), "H:mm", {*/}
+                                    {/*                weekStartsOn,*/}
+                                    {/*                locale,*/}
+                                    {/*            })}*/}
+                                    {/*            -*/}
+                                    {/*            {format(new Date(event.endDate), "H:mm", {*/}
+                                    {/*                weekStartsOn,*/}
+                                    {/*                locale,*/}
+                                    {/*            })}*/}
+                                    {/*        </p>*/}
+                                    {/*    )*/}
+                                    {/*}*/}
+                                  <p className={`font-semibold w-[100%] text-white line text-center line-clamp-${Math.floor(eventHeight/rowHeight * 3)} overflow-ellipsis`}>{event.title}</p>
                               </span>
                         </div>
                     );

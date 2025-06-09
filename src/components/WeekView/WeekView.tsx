@@ -6,6 +6,7 @@ import DaysHeader from "./DaysHeader";
 import Grid from "./Grid";
 import EventGrid from "./EventGrid";
 import {Barber} from "@/entities/Barber";
+import {useEffect} from 'react';
 
 export type Event = {
     id: string;
@@ -16,6 +17,7 @@ export type Event = {
 
 export default function WeekView({
                                      selectedBarberId,
+                                     onStartOfWeekChange,
                                      barbers,
                                      onBarberChange,
                                      initialDate,
@@ -28,10 +30,12 @@ export default function WeekView({
                                      disabledDay,
                                      disabledWeek,
                                      events,
+                                     onReload,
                                      onCellClick,
                                      onEventClick,
                                  }: {
     selectedBarberId?: string;
+    onStartOfWeekChange?: (startOfTheWeek: Date) => void,
     barbers?: Barber[];
     onBarberChange?: (barber: Barber) => void;
     initialDate?: Date;
@@ -44,10 +48,11 @@ export default function WeekView({
     disabledDay?: (date: Date) => boolean;
     disabledWeek?: (startDayOfWeek: Date) => boolean;
     events?: Event[];
+    onReload?: () => void,
     onCellClick?: (cell: Cell) => void;
     onEventClick?: (event: Event) => void;
 }) {
-    const {days: sevenDays, nextWeek, previousWeek, goToToday, viewTitle} = useWeekView({
+    const {startOfTheWeek, days: sevenDays, nextWeek, previousWeek, goToToday, viewTitle} = useWeekView({
         initialDate,
         getWeeklySchedule,
         minuteStep,
@@ -58,6 +63,10 @@ export default function WeekView({
         disabledWeek,
     });
 
+    useEffect(() => {
+        onStartOfWeekChange?.(startOfTheWeek);
+    }, [startOfTheWeek, onStartOfWeekChange]);
+
     const days = sevenDays.toSpliced(-1, 1);
 
     return (
@@ -67,6 +76,7 @@ export default function WeekView({
                 onBarberChange={onBarberChange}
                 barbers={barbers}
                 title={viewTitle}
+                onReload={onReload}
                 onNext={nextWeek}
                 onPrev={previousWeek}
                 onToday={goToToday}

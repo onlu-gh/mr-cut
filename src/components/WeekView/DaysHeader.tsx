@@ -1,7 +1,11 @@
 import {getUnixTime} from "date-fns";
 import {Days} from './use-weekview';
+import {useMediaQuery, useTheme} from '@mui/material';
 
 export default function DaysHeader({days}: { days: Days }) {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
     return (
         <div className="sticky top-0 z-30 flex-none bg-white shadow">
             <div className={`grid grid-cols text-sm leading-6 text-slate-500`} style={{gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))`}}>
@@ -23,7 +27,7 @@ export default function DaysHeader({days}: { days: Days }) {
                 >
                 {day.dayOfMonthWithZero}
               </span>
-                {day.shortName}{" "}
+                {isMobile ? day.shortName.split(' ')[1] : day.shortName}
             </span>
                     </div>
                 ))}

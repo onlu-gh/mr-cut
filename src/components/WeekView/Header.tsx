@@ -9,6 +9,7 @@ export default function Header({
                                    title,
                                    showTodayButton = true,
                                    todayButton,
+                                   onReload,
                                    onToday,
                                    showPrevButton = true,
                                    prevButton,
@@ -23,6 +24,7 @@ export default function Header({
     title: ReactNode;
     showTodayButton?: boolean;
     todayButton?: ({onToday}: { onToday?: () => void }) => ReactNode;
+    onReload?: () => void;
     onToday?: () => void;
     showPrevButton?: boolean;
     prevButton?: ({onPrev}: { onPrev?: () => void }) => ReactNode;
@@ -60,6 +62,11 @@ export default function Header({
             <h1 className="flex absolute left-[50%] translate-x-[-50%] items-center gap-3 text-base font-semibold text-slate-600">
                 {title}
             </h1>
+            <button
+                className="inline-flex mr-auto ml-5 items-center justify-center text-xs transition-colors font-normal border border-slate-200 bg-white hover:bg-slate-50 h-8 rounded-md px-3"
+                onClick={onReload}>
+                רענן
+            </button>
             {showTodayButton &&
                 (todayButton ? (
                     todayButton({onToday})

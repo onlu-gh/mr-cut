@@ -56,7 +56,7 @@ export default function Grid({
                                      gridRowStart: cellIndex + 1,
                                      gridRowEnd: cellIndex + 2,
                                  }}>
-                                <span className="absolute top-0 right-0 text-xs text-slate-400 px-1">
+                                <span className="absolute z-1000 top-0 right-0 text-xs text-slate-400 px-1">
                                     {cell.hourAndMinute}
                                 </span>
                             </div>
