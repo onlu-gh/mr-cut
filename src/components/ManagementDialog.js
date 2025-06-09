@@ -43,7 +43,7 @@ export default function ManagementDialog({
                     }}
                     size={isMobile ? "medium" : "small"}
                   >
-                    {field.options.map((option) => (
+                    {field.options?.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>

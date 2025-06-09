@@ -1,54 +1,184 @@
 'use client';
 
-import {useEffect, useState} from 'react';
-import {Box, Button, Card, CardActions, CardContent, Chip, Divider, Grid, Paper, Typography} from '@mui/material';
-import {Calendar, Clock, Scissors, User} from 'lucide-react';
+import {addMinutes, endOfWeek, format, isBefore, startOfWeek} from "date-fns";
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import {Box, Typography, useMediaQuery, useTheme} from '@mui/material';
+import {Calendar, Scissors, User} from 'lucide-react';
 import Cookies from 'js-cookie';
 import {getTranslations} from '@/translations';
+import WeekView from '@/components/WeekView/WeekView';
+import localizeIL from '@/lib/he-IL-localize';
+import {Barber} from '@/entities/Barber';
+import {Appointment} from '@/entities/Appointment';
+import ManagementDialog from '@/components/ManagementDialog';
+import {Service} from '@/entities/Service';
+import throttle from 'lodash.throttle';
 
 const t = getTranslations(true);
 
 export default function ManagementDashboard() {
-    const [upcomingAppointments, setUpcomingAppointments] = useState([]);
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const [appointments, setAppointments] = useState([]);
+    const [startOfTheWeek, setStartOfTheWeek] = useState(null);
     const [error, setError] = useState(null);
     const [user, setUser] = useState(null);
+    const [barbers, setBarbers] = useState(undefined);
+    const [services, setServices] = useState([]);
+    const [selectedBarber, setSelectedBarber] = useState(null);
+    const [openDialog, setOpenDialog] = useState(false);
+    const [editingItem, setEditingItem] = useState(null);
+
+    const initialFormData = {
+        clientName: '',
+        clientPhoneNumber: '',
+        date: '',
+        time: "",
+        serviceId: services?.[0]?.id,
+        barberId: barbers?.[0]?.id,
+    };
+
+    const [formData, setFormData] = useState();
 
     useEffect(() => {
-        loadAppointments();
+        const userData = JSON.parse(Cookies.get('userData') || '{}');
+        setUser(userData);
+
+        if (!userData.id || (userData.role !== 'ADMIN' && userData.role !== 'BARBER')) {
+            throw new Error('לא נמצא מידע עבור המשתמש המחובר');
+        } else {
+            void loadServices();
+
+            (async function () {
+                if (userData.role === 'ADMIN') {
+                    const barbers = await loadBarbers();
+                    setBarbers(barbers);
+                    setSelectedBarber(barbers.find((b) => b.id === userData.id));
+                } else if (userData.role === 'BARBER') {
+                    setSelectedBarber(await Barber.getById(userData.id));
+                }
+            })();
+        }
     }, []);
 
-    const loadAppointments = async () => {
+    const LoadWeeklyAppointments = useCallback(() => {
+        if (selectedBarber && startOfTheWeek) {
+            Appointment.get({
+                barberId: selectedBarber.id,
+                startDate: startOfTheWeek,
+                endDate: endOfWeek(startOfTheWeek),
+            }).then(res => {
+                setAppointments(res);
+                console.log(res);
+            }).catch((error) => {
+                console.error('Error loading appointments:', error);
+                setError(error.message || 'Failed to load appointments');
+            });
+        }
+    }, [selectedBarber, startOfTheWeek]);
+
+    const throttledLoadWeeklyAppointments = useMemo(() => throttle(LoadWeeklyAppointments, 3000, {
+        leading: true,
+        trailing: false
+    }), [LoadWeeklyAppointments]);
+
+    useEffect(() => {
+        LoadWeeklyAppointments();
+        const intervalId = setInterval(LoadWeeklyAppointments, 60000);
+
+        return () => {
+            clearInterval(intervalId);
+        };
+    }, [LoadWeeklyAppointments]);
+
+    const loadBarbers = async () => {
         try {
-            // Get user data from cookie
-            const userData = JSON.parse(Cookies.get('userData') || '{}');
-            setUser(userData);
-
-            if (!userData.id || (userData.role !== 'ADMIN' && userData.role !== 'BARBER')) {
-                throw new Error('לא נמצא מידע עבור המשתמש המחובר');
-            }
-
-            // Get today's date in YYYY-MM-DD format
-            const today = new Date().toISOString().split('T')[0];
-
-            // Fetch appointments with barber ID (which is the same as user ID in our schema)
-            const response = await fetch(`/api/appointments?date=${today}${userData.role === 'BARBER' ? `&barberId=${userData.id}` : ''}`);
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to load appointments');
-            }
-
-            const appointments = await response.json();
-
-            // Filter and sort upcoming appointments
-            const upcoming = appointments
-                .filter(app => new Date(app.dateTime) > new Date())
-                .sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime))
-                .slice(0, 5); // Show only next 5 appointments
-            setUpcomingAppointments(upcoming);
+            return await Barber.getAll();
         } catch (error) {
-            console.error('Error loading appointments:', error);
-            setError(error.message || 'Failed to load appointments');
+            setError('Failed to load barbers');
+        }
+
+    };
+    const loadServices = async () => {
+        try {
+            setServices(await Service.getAll());
+        } catch (error) {
+            setError('Failed to load services');
+        }
+
+    };
+    //
+    // useEffect(() => {
+    //     LoadWeeklyAppointments();
+    // }, [throttledLoadWeeklyAppointments, selectedBarber, startOfTheWeek]);
+
+    const handleStartOfWeekChange = useCallback((startOfWeek) => {
+        setStartOfTheWeek(startOfWeek);
+    }, []);
+
+    const handleOpenDialog = (item = null, date, time) => {
+        if (item) {
+            setEditingItem(item);
+            setFormData(item);
+        } else {
+            setEditingItem(null);
+            setFormData({...initialFormData, date, time});
+        }
+        setOpenDialog(true);
+    };
+
+    const handleCloseDialog = () => {
+        setOpenDialog(false);
+        setEditingItem(null);
+        setFormData(initialFormData);
+    };
+
+    const handleFormChange = (e) => {
+        const {name, value} = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleAdd = async (formData) => {
+        try {
+            await new Appointment(formData).save();
+            LoadWeeklyAppointments();
+        } catch (error) {
+            setError("Failed to save appointment");
+        }
+    };
+
+    const handleEdit = async (id, formData) => {
+        try {
+            const {barberId, serviceId} = formData;
+
+            console.log(formData);
+
+            await new Appointment({
+                ...formData,
+                barber: barbers.find(b => b.id === barberId),
+                service: services.find(s => s.id === serviceId),
+                id,
+            }).save();
+            LoadWeeklyAppointments();
+        } catch (error) {
+            setError("Failed to update appointment");
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            if (editingItem) {
+                await handleEdit(editingItem.id, formData);
+            } else {
+                await handleAdd(formData);
+            }
+            handleCloseDialog();
+        } catch (error) {
+            console.error('Failed to save item:', error);
         }
     };
 
@@ -78,6 +208,49 @@ export default function ManagementDashboard() {
         );
     }
 
+    const appointmentFields = [
+        {
+            name: "clientName",
+            label: "שם לקוח",
+            required: true,
+        },
+        {
+            name: "clientPhoneNumber",
+            label: "טלפון",
+            required: true,
+        },
+        {
+            name: "date",
+            label: "תאריך",
+            type: "date",
+            required: true,
+        },
+        {
+            name: "time",
+            label: "שעה",
+            type: "time",
+            required: true,
+        },
+        {
+            name: "barberId",
+            label: "ספר",
+            type: "select",
+            required: true,
+            options: barbers?.map((barber) => ({
+                value: barber.id,
+                label: `${barber.firstName} ${barber.lastName}`
+            })), // This should be populated with available services
+        },
+        {
+            name: "serviceId",
+            label: "שירות",
+            type: "select",
+            required: true,
+            options: services?.map((service) => ({value: service.id, label: service.name})), // This should be populated
+            // with available services
+        },
+    ];
+
     return (
         <Box>
             <Typography variant="h4" component="h1" gutterBottom>
@@ -90,121 +263,113 @@ export default function ManagementDashboard() {
                 </Typography>
             )}
 
+            <WeekView
+                onReload={throttledLoadWeeklyAppointments}
+                barbers={barbers}
+                onStartOfWeekChange={handleStartOfWeekChange}
+                selectedBarberId={selectedBarber?.id}
+                onBarberChange={setSelectedBarber}
+                locale={{code: 'he-IL', localize: localizeIL}}
+                weekStartsOn={0}
+                getWeeklySchedule={(startDayOfWeek) => selectedBarber && Object.values(selectedBarber.workingHours)}
+                disabledCell={(date) => {
+                    return isBefore(date, new Date());
+                }}
+                disabledWeek={(startDayOfWeek) => {
+                    return isBefore(startDayOfWeek, startOfWeek(new Date()));
+                }}
+                events={
+                    appointments.map(({id, date, time, service}) => {
+                        const startDate = new Date(`${date.split("T")[0]}T${time}`);
 
-            {/* Next Appointment */}
-            {upcomingAppointments.length === 0 ? (
-                <Paper sx={{p: 3, mb: 3}}>
-                    <Typography variant="h5" gutterBottom>אין תורים קרובים להיום</Typography>
-                </Paper>
-            ) : (
-                <Paper sx={{p: 3, mb: 3}}>
-                    <Typography variant="h5" gutterBottom>
-                        התור הבא
-                    </Typography>
-                    <Divider sx={{mb: 2}}/>
-                    <Card
-                        sx={{
-                            minWidth: '280px',
-                            width: '100%'
-                        }}
-                    >
-                        <CardContent>
-                            <Box sx={{display: 'flex', justifyContent: 'space-between', mb: 1}}>
-                                <Typography variant="subtitle1">
-                                    {upcomingAppointments[0].customerName}
-                                </Typography>
-                                <Chip
-                                    label={upcomingAppointments[0].status}
-                                    size="small"
-                                    color={upcomingAppointments[0].status === 'confirmed' ? 'success' : 'warning'}
-                                />
-                            </Box>
-                            <Box sx={{display: 'flex', alignItems: 'center', mb: 1}}>
-                                <Clock size={16} style={{marginRight: 8}}/>
-                                <Typography variant="body2">
-                                    {new Date(upcomingAppointments[0].dateTime).toLocaleString()}
-                                </Typography>
-                            </Box>
-                            <Box sx={{display: 'flex', alignItems: 'center', mb: 1}}>
-                                <Scissors size={16} style={{marginRight: 8}}/>
-                                <Typography variant="body2">
-                                    {upcomingAppointments[0].serviceName}
-                                </Typography>
-                            </Box>
-                            <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                <User size={16} style={{marginRight: 8}}/>
-                                <Typography variant="body2">
-                                    {upcomingAppointments[0].barberName}
-                                </Typography>
-                            </Box>
-                        </CardContent>
-                        <CardActions>
-                            <Button size="small" href={`/management/appointments/${upcomingAppointments[0].id}`}>
-                                View Details
-                            </Button>
-                        </CardActions>
-                    </Card>
-                </Paper>
-            )}
+                        return {
+                            id,
+                            title: service.name,
+                            startDate,
+                            endDate: addMinutes(startDate, service.duration_minutes),
+                        };
+                    })
+                }
+                onCellClick={(cell) => {
+                    handleOpenDialog(null, format(cell.date, 'yyyy-MM-dd'), cell.hourAndMinute);
+                    console.log(cell.date);
+                }}
+                onEventClick={(event) => {
+                    handleOpenDialog(appointments.find(({id}) => event.id === id));
+                }
+                }
+            />
 
-            <Grid container spacing={3}>
-                {/* Management Cards */}
-                <Grid item xs={12}>
-                    <Grid container spacing={3}>
-                        {managementCards.reverse().map((card) => (
-                            <Grid item xs={12} sm={6} md={3} key={card.title}>
-                                <Card
-                                    sx={{
-                                        height: '100%',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        background: `linear-gradient(145deg, ${card.color}20, ${card.color}10)`,
-                                        border: `1px solid ${card.color}30`,
-                                        minWidth: '280px',
-                                        width: '100%'
-                                    }}>
-                                    <CardContent sx={{flexGrow: 1}}>
-                                        <Box sx={{display: 'flex', alignItems: 'center', mb: 2}}>
-                                            <Box sx={{
-                                                p: 1,
-                                                borderRadius: '50%',
-                                                bgcolor: `${card.color}20`,
-                                                mr: 2,
-                                                marginLeft: 2
-                                            }}>
-                                                {card.icon}
-                                            </Box>
-                                            <Typography variant="h6" component="h2">
-                                                {card.title}
-                                            </Typography>
-                                        </Box>
-                                        <Typography color="text.secondary">
-                                            {card.description}
-                                        </Typography>
-                                    </CardContent>
-                                    <div style={{display: 'flex', width: '100%', justifyContent: 'center'}}>
-                                        <CardActions>
-                                            <Button
-                                                size="small"
-                                                href={card.href}
-                                                sx={{
-                                                    color: card.color,
-                                                    '&:hover': {
-                                                        bgcolor: `${card.color}10`
-                                                    }
-                                                }}>
-                                                בחר
-                                            </Button>
-                                        </CardActions>
-                                    </div>
-                                </Card>
-                            </Grid>
-                        ))}
-                    </Grid>
-                </Grid>
+            {/*<Grid container spacing={3}>*/}
+            {/*    /!* Management Cards *!/*/}
+            {/*    <Grid item xs={12}>*/}
+            {/*        <Grid container spacing={3}>*/}
+            {/*            {managementCards.reverse().map((card) => (*/}
+            {/*                <Grid item xs={12} sm={6} md={3} key={card.title}>*/}
+            {/*                    <Card*/}
+            {/*                        sx={{*/}
+            {/*                            height: '100%',*/}
+            {/*                            display: 'flex',*/}
+            {/*                            flexDirection: 'column',*/}
+            {/*                            background: `linear-gradient(145deg, ${card.color}20, ${card.color}10)`,*/}
+            {/*                            border: `1px solid ${card.color}30`,*/}
+            {/*                            minWidth: '280px',*/}
+            {/*                            width: '100%'*/}
+            {/*                        }}>*/}
+            {/*                        <CardContent sx={{flexGrow: 1}}>*/}
+            {/*                            <Box sx={{display: 'flex', alignItems: 'center', mb: 2}}>*/}
+            {/*                                <Box sx={{*/}
+            {/*                                    p: 1,*/}
+            {/*                                    borderRadius: '50%',*/}
+            {/*                                    bgcolor: `${card.color}20`,*/}
+            {/*                                    mr: 2,*/}
+            {/*                                    marginLeft: 2*/}
+            {/*                                }}>*/}
+            {/*                                    {card.icon}*/}
+            {/*                                </Box>*/}
+            {/*                                <Typography variant="h6" component="h2">*/}
+            {/*                                    {card.title}*/}
+            {/*                                </Typography>*/}
+            {/*                            </Box>*/}
+            {/*                            <Typography color="text.secondary">*/}
+            {/*                                {card.description}*/}
+            {/*                            </Typography>*/}
+            {/*                        </CardContent>*/}
+            {/*                        <div style={{display: 'flex', width: '100%', justifyContent: 'center'}}>*/}
+            {/*                            <CardActions>*/}
+            {/*                                <Button*/}
+            {/*                                    size="small"*/}
+            {/*                                    href={card.href}*/}
+            {/*                                    sx={{*/}
+            {/*                                        color: card.color,*/}
+            {/*                                        '&:hover': {*/}
+            {/*                                            bgcolor: `${card.color}10`*/}
+            {/*                                        }*/}
+            {/*                                    }}>*/}
+            {/*                                    בחר*/}
+            {/*                                </Button>*/}
+            {/*                            </CardActions>*/}
+            {/*                        </div>*/}
+            {/*                    </Card>*/}
+            {/*                </Grid>*/}
+            {/*            ))}*/}
+            {/*        </Grid>*/}
+            {/*    </Grid>*/}
+            {/*</Grid>*/}
 
-
-            </Grid>
+            {
+                formData && appointmentFields &&
+                <ManagementDialog
+                    open={openDialog}
+                    onClose={handleCloseDialog}
+                    title={`${editingItem ? "ערוך" : "הוסף"} תור`}
+                    formData={formData}
+                    onFormChange={handleFormChange}
+                    onSubmit={handleSubmit}
+                    fields={appointmentFields}
+                    isMobile={isMobile}
+                />
+            }
         </Box>
     );
-} 
+}
