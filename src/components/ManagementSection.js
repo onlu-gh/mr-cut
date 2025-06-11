@@ -162,6 +162,7 @@ export default function ManagementSection({
       <ManagementDialog
         open={openDialog}
         onClose={handleCloseDialog}
+        isEditing={editingItem}
         title={editingItem ? `ערוך ${dialogTitle}` : `הוסף ${dialogTitle}`}
         formData={formData}
         onFormChange={handleFormChange}

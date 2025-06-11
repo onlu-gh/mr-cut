@@ -7,12 +7,12 @@ export default function DaysHeader({days}: { days: Days }) {
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     return (
-        <div className="sticky top-0 z-30 flex-none bg-white shadow">
+        <div className="sticky top-0 z-30 flex-none bg-slate-50 shadow">
             <div className={`grid grid-cols text-sm leading-6 text-slate-500`} style={{gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))`}}>
                 {days.map((day, index) => (
                     <div key={getUnixTime(day.date)}
                          className={`
-              flex items-center justify-center h-14 border-r border-gray-100
+              flex items-center justify-center h-14 
               ${index === 0 && "border-l-0"}
             `}>
             <span className={day.isToday ? "flex items-center" : ""}>

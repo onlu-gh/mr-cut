@@ -45,8 +45,6 @@ export default function EventGrid({
                         rowHeight;
 
                     const eventHeight = rowHeight - (paddingTop + paddingBottom);
-                    // console.log(rowHeight);
-                    // console.log(eventHeight);
 
                     return (
                         <div key={event.id}
@@ -59,9 +57,9 @@ export default function EventGrid({
                              }}
                         >
                               <span
-                                  className={`absolute inset-0 flex flex-col justify-center items-center rounded-md text-sm leading-none border border-transparent border-dashed bg-[#B87333] hover:bg-[#c8894c] transition cursor-pointer`}
+                                  className={`absolute inset-0 flex flex-col justify-center items-center rounded-md text-sm leading-none m-[2px] ml-[2.75px] box-border bg-[#B87333] hover:bg-[#c8894c] transition cursor-pointer`}
                                   style={{
-                                      height: eventHeight,
+                                      height: eventHeight - 4,
                                   }}
                                   onClick={() => onEventClick?.(event)}>
                                     {/*{*/}

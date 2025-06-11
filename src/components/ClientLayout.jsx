@@ -85,6 +85,7 @@ export default function ClientLayout({children, currentPageName}) {
             if (isBarber || isAdmin) {
                 tempNavigation = [
                     {name: t.management, href: "/management"},
+                    {name: t.calendar, href: "/management/calendar"},
                     {name: t.appointmentManagement, href: "/management/appointments"},
                     {name: t.barberManagement, href: "/management/barbers"},
                 ];

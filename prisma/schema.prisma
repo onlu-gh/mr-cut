@@ -25,12 +25,24 @@ model Barber {
   phone_number   String   @unique
   specialties    String[]
   working_hours  Json
+  uniqueWorkingHours  UniqueWorkingHours[]
   photo_url      String?
   bio            String?
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
   user           User     @relation(fields: [id], references: [id])
   appointments   Appointment[]
+}
+
+model UniqueWorkingHours {
+  date DateTime
+  barberId String
+  @@id([date, barberId])
+
+  barber Barber @relation(fields: [barberId], references: [id])
+  start DateTime?
+  end DateTime?
+  middayWindows Json?
 }
 
 model Service {

@@ -66,17 +66,21 @@ export default function useWeekView({
         }
     }, [getWeeklySchedule, startOfTheWeek]);
 
+    const nextWeek = useMemo(() => addDays(startOfTheWeek, DEFAULT_WEEK_DAYS_AMOUNT), [startOfTheWeek]);
+    const previousWeek = useMemo(() => addDays(startOfTheWeek, -DEFAULT_WEEK_DAYS_AMOUNT), [startOfTheWeek]);
+
+    const isPreviousWeekDisabled = useMemo(() => disabledWeek && disabledWeek(previousWeek), [disabledWeek, previousWeek]);
+    const isNextWeekDisabled = useMemo(() => disabledWeek && disabledWeek(nextWeek), [disabledWeek, nextWeek]);
+
     const weekDaysAmount = weeklySchedule.weekDaysAmount ?? DEFAULT_WEEK_DAYS_AMOUNT;
 
-    const nextWeek = () => {
-        const nextWeek = addDays(startOfTheWeek, weekDaysAmount);
-        if (disabledWeek && disabledWeek(nextWeek)) return;
+    const showNextWeek = () => {
+        if (isNextWeekDisabled) return;
         setStartOfTheWeek(nextWeek);
     };
 
-    const previousWeek = () => {
-        const previousWeek = addDays(startOfTheWeek, -weekDaysAmount);
-        if (disabledWeek && disabledWeek(previousWeek)) return;
+    const showPreviousWeek = () => {
+        if (isPreviousWeekDisabled) return;
         setStartOfTheWeek(previousWeek);
     };
 
@@ -142,8 +146,10 @@ export default function useWeekView({
 
     return {
         startOfTheWeek,
-        nextWeek,
-        previousWeek,
+        isNextWeekDisabled,
+        isPreviousWeekDisabled,
+        showNextWeek,
+        showPreviousWeek,
         goToToday,
         days,
         weekNumber,

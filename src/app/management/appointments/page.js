@@ -114,7 +114,7 @@ export default function AppointmentsManagementPage() {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this appointment?")) {
+        if (window.confirm("אתם בטוחים שברצונכם למחוק את התור?")) {
             try {
                 await new Appointment({id}).delete();
                 await loadAppointments();
