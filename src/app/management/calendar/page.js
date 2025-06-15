@@ -1,6 +1,6 @@
 'use client';
 
-import {addMinutes, addWeeks, endOfWeek, format, isBefore, startOfWeek} from "date-fns";
+import {addDays, addMinutes, addWeeks, endOfWeek, format, isBefore, startOfWeek} from "date-fns";
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {Alert, Box, MenuItem, Select, Slide, Snackbar, Typography, useMediaQuery, useTheme} from '@mui/material';
 import Cookies from 'js-cookie';
@@ -12,6 +12,10 @@ import ManagementDialog from '@/components/ManagementDialog';
 import {Service} from '@/entities/Service';
 import debounce from 'lodash.debounce';
 import {UniqueWorkingHours} from '@/entities/UniqueWorkingHours';
+
+function getEndOfWeek(startOfTheWeek) {
+    return addDays(endOfWeek(startOfTheWeek, {weekStartsOn: 0}), -1);
+}
 
 export default function ManagementDashboard() {
     const theme = useTheme();
@@ -28,10 +32,11 @@ export default function ManagementDashboard() {
     const [editingItem, setEditingItem] = useState(null);
 
     const weeklyWorkingHours = useMemo(() => {
+        console.log(uniqueWorkingHours);
         if (selectedBarber && uniqueWorkingHours) {
             const staticWorkingHours = Object.values(selectedBarber.workingHours);
 
-            return {};
+            return [];
         }
 
         return {};
@@ -68,14 +73,14 @@ export default function ManagementDashboard() {
         }
     }, []);
 
-    const LoadWeeklyAppointments = useCallback((startOfTheWeek) => {
+    const loadWeeklyAppointments = useCallback((startOfTheWeek) => {
         if (selectedBarber && startOfTheWeek) {
             setIsLoadingCalendar(true);
             Appointment.get({
-                barberId: selectedBarber.id,
-                startDate: startOfTheWeek,
-                endDate: endOfWeek(startOfTheWeek),
-            }).then(res => {
+                                barberId: selectedBarber.id,
+                                startDate: startOfTheWeek,
+                                endDate: getEndOfWeek(startOfTheWeek),
+                            }).then(res => {
                 setAppointments(res);
                 setIsLoadingCalendar(false);
             }).catch((error) => {
@@ -85,10 +90,10 @@ export default function ManagementDashboard() {
         }
     }, [selectedBarber]);
 
-    const debouncedLoadWeeklyAppointments = useMemo(() => debounce(LoadWeeklyAppointments, 500, {
+    const debouncedLoadWeeklyAppointments = useMemo(() => debounce(loadWeeklyAppointments, 500, {
         leading: false,
         trailing: true
-    }), [LoadWeeklyAppointments]);
+    }), [loadWeeklyAppointments]);
 
     useEffect(() => {
         setIsLoadingCalendar(true);
@@ -102,22 +107,26 @@ export default function ManagementDashboard() {
         };
     }, [startOfTheWeek, debouncedLoadWeeklyAppointments]);
 
-    const LoadUniqueWorkingHours = useCallback((startOfTheWeek) => {
+    const loadUniqueWorkingHours = useCallback((startOfTheWeek) => {
         if (selectedBarber && startOfTheWeek) {
             setIsLoadingCalendar(true);
             UniqueWorkingHours.get({
-                barberId: selectedBarber.id,
-                startDate: startOfTheWeek,
-                endDate: endOfWeek(startOfTheWeek),
-            }).then(res => {
-                setAppointments(res);
+                                       barberId: selectedBarber.id,
+                                       startDate: startOfTheWeek,
+                                       endDate: getEndOfWeek(startOfTheWeek),
+                                   }).then(res => {
+                setUniqueWorkingHours(res);
                 setIsLoadingCalendar(false);
             }).catch((error) => {
-                console.error('Error loading appointments:', error);
-                setError(error.message || 'Failed to load appointments');
+                console.error('Error loading unique working hours:', error);
+                setError(error.message || 'Failed to load unique working hours');
             });
         }
     }, [selectedBarber]);
+
+    useEffect(() => {
+        loadUniqueWorkingHours(startOfTheWeek);
+    }, [loadUniqueWorkingHours, startOfTheWeek]);
 
     const loadBarbers = async () => {
         try {
@@ -172,7 +181,7 @@ export default function ManagementDashboard() {
             } catch (error) {
                 setError("Failed to delete appointment");
             } finally {
-                LoadWeeklyAppointments(startOfTheWeek);
+                loadWeeklyAppointments(startOfTheWeek);
             }
         }
         handleCloseDialog();
@@ -184,7 +193,7 @@ export default function ManagementDashboard() {
         } catch (error) {
             setError("Failed to save appointment");
         } finally {
-            LoadWeeklyAppointments(startOfTheWeek);
+            loadWeeklyAppointments(startOfTheWeek);
         }
     };
 
@@ -193,15 +202,15 @@ export default function ManagementDashboard() {
             const {barberId, serviceId} = formData;
 
             await new Appointment({
-                ...formData,
-                barber: barbers.find(b => b.id === barberId),
-                service: services.find(s => s.id === serviceId),
-                id,
-            }).save();
+                                      ...formData,
+                                      barber: barbers.find(b => b.id === barberId),
+                                      service: services.find(s => s.id === serviceId),
+                                      id,
+                                  }).save();
         } catch (error) {
             setError("Failed to update appointment");
         } finally {
-            LoadWeeklyAppointments(startOfTheWeek);
+            loadWeeklyAppointments(startOfTheWeek);
         }
     };
 

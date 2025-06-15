@@ -18,6 +18,9 @@ export async function GET(request) {
                     }
                 }
             },
+            orderBy:{
+                date: 'asc'
+            }
         });
 
         return NextResponse.json(uniqueWorkingHours);
