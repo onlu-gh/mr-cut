@@ -24,7 +24,7 @@ const DEFAULT_DAY_END = '23:59';
 export default function useWeekView({
                                         initialDate,
                                         minuteStep = 30,
-                                        weekStartsOn = 1,
+                                        weekStartsOn = 0,
                                         locale,
                                         getWeeklySchedule,
                                         disabledCell,

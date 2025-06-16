@@ -17,12 +17,17 @@ function getEndOfWeek(startOfTheWeek) {
     return addDays(endOfWeek(startOfTheWeek, {weekStartsOn: 0}), -1);
 }
 
+const WEEK_DAYS_IN_ORDER = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+
 export default function ManagementDashboard() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const [appointments, setAppointments] = useState([]);
-    const [uniqueWorkingHours, setUniqueWorkingHours] = useState([]);
-    const [isLoadingCalendar, setIsLoadingCalendar] = useState(false);
+    const [uniqueWorkingHours, setUniqueWorkingHours] = useState({});
+    const [isLoadingCalendar, setIsLoadingCalendar] = useState({
+                                                                   appointments: true,
+                                                                   uniqueWorkingHours: true,
+                                                               });
     const [startOfTheWeek, setStartOfTheWeek] = useState(null);
     const [error, setError] = useState(null);
     const [barbers, setBarbers] = useState(undefined);
@@ -32,11 +37,14 @@ export default function ManagementDashboard() {
     const [editingItem, setEditingItem] = useState(null);
 
     const weeklyWorkingHours = useMemo(() => {
-        console.log(uniqueWorkingHours);
-        if (selectedBarber && uniqueWorkingHours) {
-            const staticWorkingHours = Object.values(selectedBarber.workingHours);
-
-            return [];
+        if (startOfTheWeek && selectedBarber && uniqueWorkingHours) {
+            return WEEK_DAYS_IN_ORDER.map((day, index) => (
+                {
+                    day,
+                    ...selectedBarber.workingHours[day],
+                    ...uniqueWorkingHours[format(addDays(startOfTheWeek, index), 'yyyy-MM-dd')],
+                }
+            ));
         }
 
         return {};
@@ -75,14 +83,14 @@ export default function ManagementDashboard() {
 
     const loadWeeklyAppointments = useCallback((startOfTheWeek) => {
         if (selectedBarber && startOfTheWeek) {
-            setIsLoadingCalendar(true);
+            setIsLoadingCalendar((prev) => ({...prev, appointments: true}));
             Appointment.get({
                                 barberId: selectedBarber.id,
                                 startDate: startOfTheWeek,
                                 endDate: getEndOfWeek(startOfTheWeek),
                             }).then(res => {
                 setAppointments(res);
-                setIsLoadingCalendar(false);
+                setIsLoadingCalendar((prev) => ({...prev, appointments: false}));
             }).catch((error) => {
                 console.error('Error loading appointments:', error);
                 setError(error.message || 'Failed to load appointments');
@@ -96,27 +104,24 @@ export default function ManagementDashboard() {
     }), [loadWeeklyAppointments]);
 
     useEffect(() => {
-        setIsLoadingCalendar(true);
-        const debouncedCall = debouncedLoadWeeklyAppointments(startOfTheWeek);
-        // TODO change to SWR
-        const intervalId = setInterval(() => debouncedLoadWeeklyAppointments(startOfTheWeek), 5 * 60 * 1000);
+        console.log(isLoadingCalendar);
+    }, [isLoadingCalendar]);
 
-        return () => {
-            debouncedCall?.cancel();
-            clearInterval(intervalId);
-        };
-    }, [startOfTheWeek, debouncedLoadWeeklyAppointments]);
+    useEffect(() => {
+        console.log(weeklyWorkingHours);
+    }, [weeklyWorkingHours]);
 
     const loadUniqueWorkingHours = useCallback((startOfTheWeek) => {
+        console.log('in')
         if (selectedBarber && startOfTheWeek) {
-            setIsLoadingCalendar(true);
+            setIsLoadingCalendar((prev) => ({...prev, uniqueWorkingHours: true}));
             UniqueWorkingHours.get({
                                        barberId: selectedBarber.id,
                                        startDate: startOfTheWeek,
                                        endDate: getEndOfWeek(startOfTheWeek),
-                                   }).then(res => {
-                setUniqueWorkingHours(res);
-                setIsLoadingCalendar(false);
+                                   }).then(uwhs => {
+                setUniqueWorkingHours(Object.fromEntries(uwhs.map(({date, barberId, ...rest}) => [date, rest])));
+                setIsLoadingCalendar((prev) => ({...prev, uniqueWorkingHours: false}));
             }).catch((error) => {
                 console.error('Error loading unique working hours:', error);
                 setError(error.message || 'Failed to load unique working hours');
@@ -125,8 +130,18 @@ export default function ManagementDashboard() {
     }, [selectedBarber]);
 
     useEffect(() => {
+        setIsLoadingCalendar({appointments: true, uniqueWorkingHours: true});
         loadUniqueWorkingHours(startOfTheWeek);
-    }, [loadUniqueWorkingHours, startOfTheWeek]);
+        
+        const debouncedCall = debouncedLoadWeeklyAppointments(startOfTheWeek);
+        // TODO change to SWR
+        const intervalId = setInterval(() => debouncedLoadWeeklyAppointments(startOfTheWeek), 5 * 60 * 1000);
+
+        return () => {
+            debouncedCall?.cancel();
+            clearInterval(intervalId);
+        };
+    }, [startOfTheWeek, debouncedLoadWeeklyAppointments, loadUniqueWorkingHours]);
 
     const loadBarbers = async () => {
         try {
@@ -144,10 +159,6 @@ export default function ManagementDashboard() {
         }
 
     };
-
-    const handleStartOfWeekChange = useCallback((startOfWeek) => {
-        setStartOfTheWeek(startOfWeek);
-    }, []);
 
     const handleOpenDialog = (item = null, date, time) => {
         if (item) {
@@ -306,15 +317,15 @@ export default function ManagementDashboard() {
             </div>
             <div>
                 <WeekView isMobile={isMobile}
-                          isLoadingEvents={isLoadingCalendar}
+                          isLoadingCalendar={Object.values(isLoadingCalendar).reduce((prev, curr) => prev || curr)}
                           onReload={() => {
-                              setIsLoadingCalendar(true);
+                              setIsLoadingCalendar((prev) => ({...prev, appointments: true}));
                               debouncedLoadWeeklyAppointments(startOfTheWeek);
                           }}
-                          onStartOfWeekChange={handleStartOfWeekChange}
+                          onStartOfWeekChange={setStartOfTheWeek}
                           locale={{code: 'he-IL', localize: localizeIL}}
                           weekStartsOn={0}
-                          getWeeklySchedule={(startDayOfWeek) => selectedBarber && Object.values(selectedBarber.workingHours)}
+                          getWeeklySchedule={()=>weeklyWorkingHours}
                           disabledCell={(date) => { // TODO add start end working hour bounds
                               return isBefore(date, new Date());
                           }}

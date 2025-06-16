@@ -1,12 +1,12 @@
+import {format} from "date-fns";
+
 export class UniqueWorkingHours {
     constructor(data) {
         this.barberId = data.barberId ?? data.barber_id;
-        this.date = data.date?.split("T")[0];
+        this.date = format(new Date(data.date), 'yyyy-MM-dd');
         this.start = data.start;
         this.end = data.end;
         this.middayWindows = data.middayWindows ?? data.midday_windows;
-
-        this.barber = data.barber;
     }
 
     static async getOne({barberId, date} = {}) {

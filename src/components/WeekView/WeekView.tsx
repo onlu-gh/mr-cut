@@ -17,12 +17,12 @@ export type Event = {
 
 export default function WeekView({
                                      isMobile,
-                                     isLoadingEvents,
+                                     isLoadingCalendar,
                                      onStartOfWeekChange,
                                      initialDate,
                                      getWeeklySchedule,
                                      minuteStep = 30,
-                                     weekStartsOn = 1,
+                                     weekStartsOn = 0,
                                      locale,
                                      rowHeight = 56,
                                      disabledCell,
@@ -34,7 +34,7 @@ export default function WeekView({
                                      onEventClick,
                                  }: {
     isMobile?: boolean;
-    isLoadingEvents?: boolean;
+    isLoadingCalendar?: boolean;
     onStartOfWeekChange?: (startOfTheWeek: Date) => void,
     initialDate?: Date;
     getWeeklySchedule?: (startDayOfWeek: Date) => WorkingHours[];
@@ -95,7 +95,7 @@ export default function WeekView({
                 </h1>
             }
             <DaysHeader days={days}/>
-            <div className={`flex flex-col flex-1 overflow-hidden select-none bg-white ${isLoadingEvents && 'brightness-90 pointer-events-none'}`}>
+            <div className={`flex flex-col flex-1 overflow-hidden select-none bg-white ${isLoadingCalendar && 'brightness-90 pointer-events-none'}`}>
                 <div className="flex flex-col flex-1 isolate overflow-auto" dir={"ltr"}>
                     <div className="flex flex-col flex-none" dir={"rtl"}>
                         <div className="grid grid-cols-1 grid-rows-1 flex-1">
@@ -121,9 +121,9 @@ export default function WeekView({
                     </div>
                 </div>
                 {
-                    isLoadingEvents && <CircularProgress color={'success'}
-                                                         thickness={5}
-                                                         className="z-50 absolute top-[50%] translate-y-[-100%] self-center"/>
+                    isLoadingCalendar && <CircularProgress color={'success'}
+                                                           thickness={5}
+                                                           className="z-50 absolute top-[50%] translate-y-[-100%] self-center"/>
                 }
             </div>
         </div>
