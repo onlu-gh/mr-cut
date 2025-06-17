@@ -76,7 +76,7 @@ export default function ManagementDialog({
                         ))}
                     </Grid>
                 </DialogContent>
-                <DialogActions sx={{justifyContent:'space-between'}}>
+                <DialogActions sx={{justifyContent: isEditing && onDelete ? 'space-between' : 'flex-end'}}>
                     {
                         (isEditing && onDelete) &&
                         <Button onClick={onDelete} variant="outlined" color={'error'} size={isMobile ? "large" : "medium"}>

@@ -25,7 +25,7 @@ export default function Grid({
                 day.cells.map((cell, cellIndex) => (
                     <button
                         key={getUnixTime(cell.date)}
-                        className="relative border-t border-l border-gray-200 transition-colors cursor-pointer hover:bg-slate-200 disabled:bg-slate-100"
+                        className="relative border-t border-l border-gray-200 transition-colors cursor-pointer hover:bg-slate-200 disabled:bg-slate-300"
                         style={{
                             gridRowStart: cellIndex + 1,
                             gridRowEnd: cellIndex + 2,

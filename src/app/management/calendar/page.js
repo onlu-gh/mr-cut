@@ -22,12 +22,13 @@ const WEEK_DAYS_IN_ORDER = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursda
 export default function ManagementDashboard() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
     const [appointments, setAppointments] = useState([]);
     const [uniqueWorkingHours, setUniqueWorkingHours] = useState({});
     const [isLoadingCalendar, setIsLoadingCalendar] = useState({
-                                                                   appointments: true,
-                                                                   uniqueWorkingHours: true,
-                                                               });
+        appointments: true,
+        uniqueWorkingHours: true,
+    });
     const [startOfTheWeek, setStartOfTheWeek] = useState(null);
     const [error, setError] = useState(null);
     const [barbers, setBarbers] = useState(undefined);
@@ -36,18 +37,23 @@ export default function ManagementDashboard() {
     const [openDialog, setOpenDialog] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
 
-    const weeklyWorkingHours = useMemo(() => {
+    const weeklySchedule = useMemo(() => {
         if (startOfTheWeek && selectedBarber && uniqueWorkingHours) {
-            return WEEK_DAYS_IN_ORDER.map((day, index) => (
-                {
-                    day,
-                    ...selectedBarber.workingHours[day],
-                    ...uniqueWorkingHours[format(addDays(startOfTheWeek, index), 'yyyy-MM-dd')],
-                }
-            ));
+            const res = {};
+
+            WEEK_DAYS_IN_ORDER.forEach((dayOfWeek, index) => {
+                const date = format(addDays(startOfTheWeek, index), 'yyyy-MM-dd');
+
+                res[date] = {
+                    ...selectedBarber.workingHours[dayOfWeek],
+                    ...uniqueWorkingHours[date],
+                };
+            });
+
+            return res;
         }
 
-        return {};
+        return null;
     }, [uniqueWorkingHours, selectedBarber]);
 
     const initialFormData = {
@@ -85,10 +91,10 @@ export default function ManagementDashboard() {
         if (selectedBarber && startOfTheWeek) {
             setIsLoadingCalendar((prev) => ({...prev, appointments: true}));
             Appointment.get({
-                                barberId: selectedBarber.id,
-                                startDate: startOfTheWeek,
-                                endDate: getEndOfWeek(startOfTheWeek),
-                            }).then(res => {
+                barberId: selectedBarber.id,
+                startDate: startOfTheWeek,
+                endDate: getEndOfWeek(startOfTheWeek),
+            }).then(res => {
                 setAppointments(res);
                 setIsLoadingCalendar((prev) => ({...prev, appointments: false}));
             }).catch((error) => {
@@ -108,18 +114,18 @@ export default function ManagementDashboard() {
     }, [isLoadingCalendar]);
 
     useEffect(() => {
-        console.log(weeklyWorkingHours);
-    }, [weeklyWorkingHours]);
+        console.log(weeklySchedule);
+    }, [weeklySchedule]);
 
     const loadUniqueWorkingHours = useCallback((startOfTheWeek) => {
         console.log('in')
         if (selectedBarber && startOfTheWeek) {
             setIsLoadingCalendar((prev) => ({...prev, uniqueWorkingHours: true}));
             UniqueWorkingHours.get({
-                                       barberId: selectedBarber.id,
-                                       startDate: startOfTheWeek,
-                                       endDate: getEndOfWeek(startOfTheWeek),
-                                   }).then(uwhs => {
+                barberId: selectedBarber.id,
+                startDate: startOfTheWeek,
+                endDate: getEndOfWeek(startOfTheWeek),
+            }).then(uwhs => {
                 setUniqueWorkingHours(Object.fromEntries(uwhs.map(({date, barberId, ...rest}) => [date, rest])));
                 setIsLoadingCalendar((prev) => ({...prev, uniqueWorkingHours: false}));
             }).catch((error) => {
@@ -132,7 +138,7 @@ export default function ManagementDashboard() {
     useEffect(() => {
         setIsLoadingCalendar({appointments: true, uniqueWorkingHours: true});
         loadUniqueWorkingHours(startOfTheWeek);
-        
+
         const debouncedCall = debouncedLoadWeeklyAppointments(startOfTheWeek);
         // TODO change to SWR
         const intervalId = setInterval(() => debouncedLoadWeeklyAppointments(startOfTheWeek), 5 * 60 * 1000);
@@ -213,11 +219,11 @@ export default function ManagementDashboard() {
             const {barberId, serviceId} = formData;
 
             await new Appointment({
-                                      ...formData,
-                                      barber: barbers.find(b => b.id === barberId),
-                                      service: services.find(s => s.id === serviceId),
-                                      id,
-                                  }).save();
+                ...formData,
+                barber: barbers.find(b => b.id === barberId),
+                service: services.find(s => s.id === serviceId),
+                id,
+            }).save();
         } catch (error) {
             setError("Failed to update appointment");
         } finally {
@@ -325,9 +331,15 @@ export default function ManagementDashboard() {
                           onStartOfWeekChange={setStartOfTheWeek}
                           locale={{code: 'he-IL', localize: localizeIL}}
                           weekStartsOn={0}
-                          getWeeklySchedule={()=>weeklyWorkingHours}
-                          disabledCell={(date) => { // TODO add start end working hour bounds
-                              return isBefore(date, new Date());
+                          getWeeklySchedule={() => weeklySchedule ? Object.values(weeklySchedule ?? {}) : null}
+                          disabledCell={(date) => {
+                              const day = format(date, 'yyyy-MM-dd');
+                              const hour = format(date, 'HH:mm');
+
+                              return (
+                                  isBefore(date, new Date()) ||
+                                  (weeklySchedule?.[day] && (hour < weeklySchedule[day].start || hour >= weeklySchedule[day].end || weeklySchedule[day].middayWindows?.includes(hour)))
+                              );
                           }}
                           disabledWeek={(startDayOfWeek) => {
                               return isBefore(startDayOfWeek, startOfWeek(addWeeks(new Date(), -2)));

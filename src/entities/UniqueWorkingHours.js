@@ -3,7 +3,7 @@ import {format} from "date-fns";
 export class UniqueWorkingHours {
     constructor(data) {
         this.barberId = data.barberId ?? data.barber_id;
-        this.date = format(new Date(data.date), 'yyyy-MM-dd');
+        this.date = data.date ? format(new Date(data.date), 'yyyy-MM-dd') : null;
         this.start = data.start;
         this.end = data.end;
         this.middayWindows = data.middayWindows ?? data.midday_windows;
