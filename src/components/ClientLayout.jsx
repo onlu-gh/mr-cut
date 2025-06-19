@@ -130,7 +130,6 @@ export default function ClientLayout({children, currentPageName}) {
     return (
         <Box
             className={"client layout"}
-
             sx={{
                 minHeight: '100vh',
                 bgcolor: '#F5F1E6',

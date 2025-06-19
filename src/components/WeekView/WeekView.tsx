@@ -32,6 +32,7 @@ export default function WeekView({
                                      onReload,
                                      onCellClick,
                                      onEventClick,
+                                     onDayClick,
                                  }: {
     isMobile?: boolean;
     isLoadingCalendar?: boolean;
@@ -49,6 +50,7 @@ export default function WeekView({
     onReload?: () => void,
     onCellClick?: (cell: Cell) => void;
     onEventClick?: (event: Event) => void;
+    onDayClick?: (date: Date) => void;
 }) {
     const {
         startOfTheWeek,
@@ -77,7 +79,7 @@ export default function WeekView({
     const days = sevenDays.toSpliced(-1, 1);
 
     return (
-        <div className="flex flex-col overflow-hidden bg-white h-[70vh] rounded-md border-[#394f4455] border-1">
+        <div className="flex flex-col overflow-hidden bg-white rounded-md border-[#394f4455] border-1">
             <Header
                 title={isMobile ? '' : viewTitle}
                 onReload={onReload}
@@ -94,7 +96,7 @@ export default function WeekView({
                     {viewTitle}
                 </h1>
             }
-            <DaysHeader days={days}/>
+            <DaysHeader days={days} onDayClick={onDayClick}/>
             <div className={`flex flex-col flex-1 overflow-hidden select-none bg-white ${isLoadingCalendar && 'brightness-90 pointer-events-none'}`}>
                 <div className="flex flex-col flex-1 isolate overflow-auto" dir={"ltr"}>
                     <div className="flex flex-col flex-none" dir={"rtl"}>

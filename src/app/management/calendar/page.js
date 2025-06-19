@@ -19,7 +19,7 @@ function getEndOfWeek(startOfTheWeek) {
 
 const WEEK_DAYS_IN_ORDER = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
 
-export default function ManagementDashboard() {
+export default function CalendarManagement() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -56,7 +56,7 @@ export default function ManagementDashboard() {
         return null;
     }, [uniqueWorkingHours, selectedBarber]);
 
-    const initialFormData = {
+    const initialAppointmentFormData = {
         clientName: '',
         clientPhoneNumber: '',
         date: '',
@@ -166,21 +166,24 @@ export default function ManagementDashboard() {
 
     };
 
-    const handleOpenDialog = (item = null, date, time) => {
+    const handleOpenDialog = (item = null, additionalFields = {}) => {
         if (item) {
             setEditingItem(item);
             setFormData(item);
         } else {
             setEditingItem(null);
-            setFormData({...initialFormData, date, time});
+            setFormData({...initialAppointmentFormData, ...additionalFields});
         }
         setOpenDialog(true);
+    };
+
+    const handleOpenAppointmentDialog = (item = null, date, time) => {
+        handleOpenDialog(item, {date, time});
     };
 
     const handleCloseDialog = () => {
         setOpenDialog(false);
         setEditingItem(null);
-        setFormData(initialFormData);
     };
 
     const handleFormChange = (e) => {
@@ -337,7 +340,7 @@ export default function ManagementDashboard() {
                               const hour = format(date, 'HH:mm');
 
                               return (
-                                  isBefore(date, new Date()) ||
+                                  // isBefore(date, new Date()) ||
                                   (weeklySchedule?.[day] && (hour < weeklySchedule[day].start || hour >= weeklySchedule[day].end || weeklySchedule[day].middayWindows?.includes(hour)))
                               );
                           }}
@@ -356,15 +359,19 @@ export default function ManagementDashboard() {
                                   };
                               })
                           }
+                          onDayClick={
+                              (date) => {
+                                  handleOpenDialog(null);
+                              }
+                          }
                           onCellClick={
                               (cell) => {
-                                  handleOpenDialog(null, format(cell.date, 'yyyy-MM-dd'), cell.hourAndMinute);
-                                  console.log(cell.date);
+                                  handleOpenAppointmentDialog(null, format(cell.date, 'yyyy-MM-dd'), cell.hourAndMinute);
                               }
                           }
                           onEventClick={
                               (event) => {
-                                  handleOpenDialog(appointments.find(({id}) => event.id === id));
+                                  handleOpenAppointmentDialog(appointments.find(({id}) => event.id === id));
                               }
                           }
                 />
