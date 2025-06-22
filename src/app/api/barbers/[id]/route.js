@@ -33,7 +33,7 @@ export async function GET(request, {params}) {
             lastName: barber.lastName || barber.user.lastName,
             phone_number: barber.phone_number,
             specialties: barber.specialties,
-            working_hours: barber.working_hours,
+            workingHours: barber.working_hours,
             photo_url: barber.photo_url,
             bio: barber.bio,
             created_at: barber.created_at,
