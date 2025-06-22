@@ -461,6 +461,14 @@ export default function CalendarManagement() {
                       locale={{code: 'he-IL', localize: localizeIL}}
                       weekStartsOn={0}
                       getWeeklySchedule={() => weeklySchedule ? Object.values(weeklySchedule ?? {}) : null}
+                      disabledDay={
+                          (date) => {
+                              console.log(weeklySchedule);
+                              const day = format(date, 'yyyy-MM-dd');
+
+                              return !weeklySchedule?.[day]?.start && !weeklySchedule?.[day]?.end;
+                          }
+                      }
                       windowCell={(date) => {
                           const day = format(date, 'yyyy-MM-dd');
                           const hour = format(date, 'HH:mm');
