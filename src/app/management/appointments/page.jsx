@@ -190,8 +190,8 @@ export default function AppointmentsManagementPage() {
         {
             name: "time",
             label: "שעה",
-            type: "time",
             required: true,
+            customComponent: 'time',
         },
         {
             name: "barberId",

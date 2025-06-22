@@ -1,4 +1,25 @@
-import {Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, TextField} from '@mui/material';
+import {Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, TextField} from '@mui/material';
+import {TimePicker} from '@mui/x-date-pickers';
+import React from 'react';
+import {format, parse} from 'date-fns';
+
+const COMMON_CUSTOM_COMPONENTS = {
+    time: ({value, onChange, label}) => (
+        <TimePicker
+            sx={{
+                width: '100%',
+            }}
+            label={label}
+            minutesStep={30}
+            timeSteps={{minutes: 30}}
+            value={value ? parse(value, 'HH:mm', new Date()) : null}
+            onChange={(value) => onChange(format(value, 'HH:mm'))}
+        />
+    ),
+    text: ({value}) => (
+        <span>{value}</span>
+    ),
+}
 
 export default function ManagementDialog({
                                              open,
@@ -43,8 +64,7 @@ export default function ManagementDialog({
                                         SelectProps={{
                                             native: true,
                                         }}
-                                        size={isMobile ? "medium" : "small"}
-                                    >
+                                        size={isMobile ? "medium" : "small"}>
                                         {field.options?.map((option) => (
                                             <option key={option.value} value={option.value}>
                                                 {option.label}
@@ -52,10 +72,11 @@ export default function ManagementDialog({
                                         ))}
                                     </TextField>
                                 ) : field.customComponent ? (
-                                    customComponents[field.customComponent]({
+                                    (customComponents[field.customComponent] ?? COMMON_CUSTOM_COMPONENTS[field.customComponent])({
                                         value: formData[field.name],
                                         onChange: (value) => handleCustomChange(field.name, value),
-                                        isMobile
+                                        isMobile,
+                                        label: field.label,
                                     })
                                 ) : (
                                     <TextField
@@ -79,12 +100,14 @@ export default function ManagementDialog({
                 <DialogActions sx={{justifyContent: isEditing && onDelete ? 'space-between' : 'flex-end'}}>
                     {
                         (isEditing && onDelete) &&
-                        <Button onClick={onDelete} variant="outlined" color={'error'} size={isMobile ? "large" : "medium"}>
+                        <Button onClick={onDelete} variant="outlined" color={'error'}
+                                size={isMobile ? "large" : "medium"}>
                             מחק
                         </Button>
                     }
-                    <div style={{display:'flex', gap: 20}}>
-                        <Button variant={'outlined'} color={'info'} onClick={onClose} size={isMobile ? "large" : "medium"}>
+                    <div style={{display: 'flex', gap: 20}}>
+                        <Button variant={'outlined'} color={'info'} onClick={onClose}
+                                size={isMobile ? "large" : "medium"}>
                             ביטול
                         </Button>
                         <Button type="submit" variant="contained" size={isMobile ? "large" : "medium"}>

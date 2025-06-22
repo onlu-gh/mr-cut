@@ -97,8 +97,8 @@ export default function CalendarManagement() {
         {
             name: "time",
             label: "שעה",
-            type: "time",
             required: true,
+            customComponent: 'time',
         },
         {
             name: "barberId",
@@ -130,14 +130,14 @@ export default function CalendarManagement() {
         {
             name: "start",
             label: "שעת פתיחה",
-            type: "time",
             required: false,
+            customComponent: 'time',
         },
         {
             name: "end",
             label: "שעת סגירה",
-            type: "time",
             required: false,
+            customComponent: 'time',
         },
     ];
 
@@ -548,13 +548,6 @@ export default function CalendarManagement() {
                     onSubmit={handleSubmit}
                     fields={dataDialog.fields}
                     isMobile={isMobile}
-                    customComponents={{
-                        text: ({value}) => (
-                            <span>
-                                {value}
-                            </span>
-                        ),
-                    }}
                 />
             }
             <Snackbar open={error}
