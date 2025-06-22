@@ -31,7 +31,7 @@ export default function Grid({
                             gridColumnStart: dayIndex + 1,
                             gridColumnEnd: dayIndex + 2,
                         }}
-                        disabled={cell.disabled}
+                        disabled={day.disabled || cell.disabled}
                         onClick={() => onCellClick?.(cell)}>
                         {CellContent && CellContent(cell)}
                     </button>
