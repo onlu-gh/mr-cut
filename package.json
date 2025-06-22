@@ -17,7 +17,7 @@
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.15.10",
     "@mui/material": "^5.15.10",
-    "@mui/x-date-pickers": "^8.3.1",
+    "@mui/x-date-pickers": "^8.5.3",
     "@neondatabase/serverless": "^1.0.0",
     "@prisma/client": "^6.7.0",
     "@tailwindcss/postcss": "^4.1.8",
