@@ -97,15 +97,23 @@ export default function ManagementDialog({
                         ))}
                     </Grid>
                 </DialogContent>
-                <DialogActions sx={{justifyContent: isEditing && onDelete ? 'space-between' : 'flex-end'}}>
+                <DialogActions sx={{
+                    justifyContent: isEditing && onDelete ? 'space-between' : 'flex-end',
+                    paddingBlock: 4,
+                    boxSizing: 'border-box',
+                }}>
                     {
                         (isEditing && onDelete) &&
-                        <Button onClick={onDelete} variant="outlined" color={'error'}
+                        <Button onClick={onDelete} variant="outlined"
+                                color={'error'}
+                                sx={{
+                                    marginInlineStart: 2,
+                                }}
                                 size={isMobile ? "large" : "medium"}>
                             מחק
                         </Button>
                     }
-                    <div style={{display: 'flex', gap: 20}}>
+                    <div style={{display: 'flex', gap: 20, marginInlineEnd: 20}}>
                         <Button variant={'outlined'} color={'info'} onClick={onClose}
                                 size={isMobile ? "large" : "medium"}>
                             ביטול
