@@ -11,7 +11,6 @@ export class UniqueWorkingHours {
 
     static async getOne({barberId, date} = {}) {
         try {
-
             const response = await fetch(`/api/uniqueWorkingHours/${barberId}/${date}`);
             if (!response.ok) throw new Error('Failed to fetch unique working hours');
             const data = await response.json();
@@ -41,27 +40,32 @@ export class UniqueWorkingHours {
 
     async save() {
         try {
-            const method = 'PUT';
-            const url = `/api/uniqueWorkingHours/${this.barber_id}/${this.date}`;
+            if(this.start || this.end || this.middayWindows.length) {
+                const method = 'PUT';
+                const url = `/api/uniqueWorkingHours/${this.barberId}/${this.date}`;
 
-            const response = await fetch(url, {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    start: this.start,
-                    end: this.end,
-                    midday_windows: this.middayWindows,
-                }),
-            });
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        start: this.start,
+                        end: this.end,
+                        midday_windows: this.middayWindows,
+                    }),
+                });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to save unique working hours');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to save unique working hours');
+                }
+                const data = await response.json();
+                return new UniqueWorkingHours(data);
             }
-            const data = await response.json();
-            return new UniqueWorkingHours(data);
+            else{
+                await this.delete();
+            }
         } catch (error) {
             console.error('Error saving unique working hours:', error);
             throw error;
@@ -70,7 +74,7 @@ export class UniqueWorkingHours {
 
     async delete() {
         try {
-            const response = await fetch(`/api/uniqueWorkingHours/${this.barber_id}/${this.date}`, {
+            const response = await fetch(`/api/uniqueWorkingHours/${this.barberId}/${this.date}`, {
                 method: 'DELETE',
             });
 

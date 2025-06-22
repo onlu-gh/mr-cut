@@ -6,16 +6,14 @@ export async function GET(request, {params}) {
         const {barberId, date} = await params;
         const uniqueWorkingHours = await prisma.uniqueWorkingHours.findUnique({
             where: {
-                barber_id: barberId,
-                date,
+                id: {
+                    barber_id: barberId,
+                    date: new Date(date).toISOString(),
+                },
             },
         });
 
-        if (!uniqueWorkingHours) {
-            return NextResponse.json({error: 'uniqueWorkingHours object not found'}, {status: 404});
-        }
-
-        return NextResponse.json(uniqueWorkingHours);
+        return NextResponse.json(uniqueWorkingHours ?? {});
     } catch (error) {
         console.error('Error fetching unique working hours:', error);
         return NextResponse.json({error: 'Failed to fetch unique working hours'}, {status: 500});
@@ -24,9 +22,9 @@ export async function GET(request, {params}) {
 
 export async function PUT(request, {params}) {
     try {
-        const {barberId, date} = await params;
+        const {barberId, date: day} = await params;
         const body = await request.json();
-        console.log('Received update request:', {barberId, date, body});
+        console.log('Received update request:', {barberId, day, body});
 
         // Validate required fields
         const {start, end, midday_windows} = body;
@@ -37,17 +35,26 @@ export async function PUT(request, {params}) {
             );
         }
 
+        const upsertObject = {
+            date: new Date(day).toISOString(),
+            barber_id: barberId,
+            start,
+            end,
+            midday_windows,
+        };
+
+        const {date, barber_id} = upsertObject;
+
         // Update the appointment
-        const uniqueWorkingHours = await prisma.uniqueWorkingHours.update({
+        const uniqueWorkingHours = await prisma.uniqueWorkingHours.upsert({
             where: {
-                barber_id: barberId,
-                date,
+                id: {
+                    date,
+                    barber_id,
+                }
             },
-            data: {
-                start,
-                end,
-                midday_windows,
-            }
+            update: upsertObject,
+            create: upsertObject,
         });
 
         console.log('unique working hours updated successfully:', uniqueWorkingHours);
@@ -69,8 +76,10 @@ export async function DELETE(request, {params}) {
         const {barberId, date} = await params;
         await prisma.uniqueWorkingHours.delete({
             where: {
-                barber_id: barberId,
-                date,
+                id: {
+                    barber_id: barberId,
+                    date: new Date(date).toISOString(),
+                }
             },
         });
 

@@ -27,6 +27,7 @@ export default function useWeekView({
                                         weekStartsOn = 0,
                                         locale,
                                         getWeeklySchedule,
+                                        windowCell,
                                         disabledCell,
                                         disabledDay,
                                         disabledWeek,
@@ -37,6 +38,7 @@ export default function useWeekView({
                                         weekStartsOn?: Day;
                                         locale?: Locale;
                                         getWeeklySchedule?: (startDayOfWeek: Date) => WorkingHours[];
+                                        windowCell?: (date: Date) => boolean;
                                         disabledCell?: (date: Date) => boolean;
                                         disabledDay?: (date: Date) => boolean;
                                         disabledWeek?: (startDayOfWeek: Date) => boolean;
@@ -119,6 +121,7 @@ export default function useWeekView({
                 hour: format(hour, "HH", {locale}),
                 minute: format(hour, "mm", {locale}),
                 hourAndMinute: format(hour, "HH:mm", {locale}),
+                window: windowCell ? windowCell(hour) : false,
                 disabled: disabledCell ? disabledCell(hour) : false,
             })),
         }

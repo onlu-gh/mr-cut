@@ -2,8 +2,8 @@ import MuiProvider from '@/components/MuiProvider.jsx';
 import ClientLayout from '@/components/ClientLayout.jsx';
 import './globals.css';
 import {Analytics} from '@vercel/analytics/next';
-import {DevSupport} from '@react-buddy/ide-toolbox-next';
-import ComponentPreviews from '@/components/dev/previews';
+import {ThemeProvider} from '@mui/material/styles';
+import theme from './theme';
 
 export const metadata = {
     title: 'Mr. Cut',
@@ -17,14 +17,14 @@ export default function RootLayout({children}) {
             <meta name="emotion-insertion-point" content=""/>
         </head>
         <body>
-        <DevSupport ComponentPreviews={ComponentPreviews}>
-            <MuiProvider>
+        <MuiProvider>
+            <ThemeProvider theme={theme}>
                 <Analytics/>
                 <ClientLayout>
                     {children}
                 </ClientLayout>
-            </MuiProvider>
-        </DevSupport>
+            </ThemeProvider>
+        </MuiProvider>
         </body>
         </html>
     );

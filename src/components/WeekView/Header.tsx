@@ -41,10 +41,10 @@ export default function Header({
                         todayButton({onToday})
                     ) : (
                         <button
-                            className="inline-flex mr-auto ml-5 items-center justify-center text-xs transition-colors font-normal border border-slate-200 bg-white hover:bg-slate-50 hover:cursor-pointer h-8 rounded-md px-3"
+                            className="inline-flex mr-auto ml-5 items-center justify-center text-xs text-white transition-colors font-normal border border-slate-200 bg-[#2D5043] hover:bg-[#2D5043cc] hover:cursor-pointer h-8 rounded-md px-3"
                             onClick={onToday}
                         >
-                            חזרה להיום
+                            חזרה לשבוע הנוכחי
                         </button>
                     ))}
                 <div className="flex items-center space-x-5">

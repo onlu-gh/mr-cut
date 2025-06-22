@@ -10,7 +10,8 @@ import {
     Button,
     Grid,
 } from '@mui/material';
-import {format, addDays, parseISO, isToday, isTomorrow} from 'date-fns';
+import {format, addDays, parseISO, isToday, isTomorrow, startOfDay, endOfDay} from 'date-fns';
+import {UniqueWorkingHours} from '@/entities/UniqueWorkingHours';
 
 const APPOINTMENT_TIME_SLOT_TO_HOUR_RATIO = 0.5;
 
@@ -23,7 +24,6 @@ const AvailableSlotsCard = ({selectedBarber, selectedDate, onSlotSelect}) => {
 
     useEffect(() => {
         const fetchData = async () => {
-            console.log(selectedDate)
             if (!selectedBarber || !selectedDate) return;
 
             setLoading(true);
@@ -31,14 +31,18 @@ const AvailableSlotsCard = ({selectedBarber, selectedDate, onSlotSelect}) => {
                 // Fetch barber's working hours
                 const barberResponse = await fetch(`/api/barbers/${selectedBarber.id}`);
                 const barberData = await barberResponse.json();
-                const workingHours = barberData.working_hours;
 
                 // Fetch existing appointments for the selected date
                 const appointmentsResponse = await fetch(
-                    `/api/appointments?barberId=${selectedBarber.id}&date=${selectedDate}`
+                    `/api/appointments?barberId=${selectedBarber.id}&startDate=${startOfDay(selectedDate)}&endDate=${endOfDay(selectedDate)}`
                 );
                 const appointments = await appointmentsResponse.json();
                 setExistingAppointments(appointments);
+
+                const uniqueWorkingHours = await UniqueWorkingHours.getOne({
+                    barberId: selectedBarber.id,
+                    date: selectedDate,
+                });
 
                 // Get current date and time
                 const today = new Date();
@@ -62,7 +66,12 @@ const AvailableSlotsCard = ({selectedBarber, selectedDate, onSlotSelect}) => {
                 // Get the day of week for the selected date
                 const selectedDateObj = selectedDate ? parseISO(selectedDate) : today;
                 const dayOfWeek = format(selectedDateObj, 'EEEE').toLowerCase();
-                const dayWorkingHours = workingHours[dayOfWeek];
+                const dayWorkingHours = {
+                    ...barberData.working_hours[dayOfWeek],
+                    ...uniqueWorkingHours,
+                    start: uniqueWorkingHours?.start ?? barberData.working_hours[dayOfWeek].start,
+                    end: uniqueWorkingHours?.end ?? barberData.working_hours[dayOfWeek].end,
+                };
 
                 if (dayWorkingHours) {
                     const slots = generateSlots(dayWorkingHours.start, dayWorkingHours.end);
@@ -73,7 +82,7 @@ const AvailableSlotsCard = ({selectedBarber, selectedDate, onSlotSelect}) => {
                     )).map((apt=>(apt.time)));
 
                     // Filter out any slots that are already booked
-                    const availableSlots = slots.filter(slot => !bookedTimes.includes(slot));
+                    const availableSlots = slots.filter(slot => !bookedTimes.includes(slot) && !dayWorkingHours.middayWindows?.includes(slot));
 
                     setAvailableSlots(availableSlots);
                 } else {
@@ -83,7 +92,7 @@ const AvailableSlotsCard = ({selectedBarber, selectedDate, onSlotSelect}) => {
                 // Find next working day
                 let nextDay = today;
                 let daysChecked = 0;
-                while (!workingHours[format(nextDay, 'EEEE').toLowerCase()] && daysChecked < 14) {
+                while (!barberData.working_hours[format(nextDay, 'EEEE').toLowerCase()] && daysChecked < 14) {
                     nextDay = addDays(nextDay, 1);
                     daysChecked++;
                 }

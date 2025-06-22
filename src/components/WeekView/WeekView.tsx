@@ -25,6 +25,7 @@ export default function WeekView({
                                      weekStartsOn = 0,
                                      locale,
                                      rowHeight = 56,
+                                     windowCell,
                                      disabledCell,
                                      disabledDay,
                                      disabledWeek,
@@ -43,6 +44,7 @@ export default function WeekView({
     weekStartsOn?: Day;
     locale?: Locale;
     rowHeight?: number;
+    windowCell?: (date: Date) => boolean;
     disabledCell?: (date: Date) => boolean;
     disabledDay?: (date: Date) => boolean;
     disabledWeek?: (startDayOfWeek: Date) => boolean;
@@ -67,6 +69,7 @@ export default function WeekView({
         minuteStep,
         weekStartsOn,
         locale,
+        windowCell,
         disabledCell,
         disabledDay,
         disabledWeek,

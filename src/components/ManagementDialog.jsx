@@ -83,8 +83,8 @@ export default function ManagementDialog({
                             מחק
                         </Button>
                     }
-                    <div>
-                        <Button onClick={onClose} size={isMobile ? "large" : "medium"}>
+                    <div style={{display:'flex', gap: 20}}>
+                        <Button variant={'outlined'} color={'info'} onClick={onClose} size={isMobile ? "large" : "medium"}>
                             ביטול
                         </Button>
                         <Button type="submit" variant="contained" size={isMobile ? "large" : "medium"}>

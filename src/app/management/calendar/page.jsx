@@ -1,8 +1,19 @@
 'use client';
 
-import {addDays, addMinutes, addWeeks, endOfWeek, format, isBefore, startOfWeek} from "date-fns";
+import {addDays, addMinutes, addWeeks, endOfWeek, format, getDay, isBefore, startOfWeek} from "date-fns";
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {Alert, Box, MenuItem, Select, Slide, Snackbar, Typography, useMediaQuery, useTheme} from '@mui/material';
+import {
+    Alert,
+    Box, Button,
+    Dialog,
+    MenuItem,
+    Select,
+    Slide,
+    Snackbar,
+    Typography,
+    useMediaQuery,
+    useTheme
+} from '@mui/material';
 import Cookies from 'js-cookie';
 import WeekView from '@/components/WeekView/WeekView';
 import localizeIL from '@/lib/he-IL-localize';
@@ -34,11 +45,19 @@ export default function CalendarManagement() {
     const [barbers, setBarbers] = useState(undefined);
     const [services, setServices] = useState([]);
     const [selectedBarber, setSelectedBarber] = useState(null);
-    const [openDialog, setOpenDialog] = useState(false);
+    const [cellDialog, setCellDialog] = useState({isOpen: false, clickedCell: null});
+    const [dataDialog, setDataDialog] = useState({
+        isOpen: false,
+        title: '',
+        fields: [],
+        handleEdit: null,
+        handleAdd: null,
+        handleDelete: null,
+    });
     const [editingItem, setEditingItem] = useState(null);
 
     const weeklySchedule = useMemo(() => {
-        if (startOfTheWeek && selectedBarber && uniqueWorkingHours) {
+        if (startOfTheWeek && selectedBarber) {
             const res = {};
 
             WEEK_DAYS_IN_ORDER.forEach((dayOfWeek, index) => {
@@ -47,6 +66,8 @@ export default function CalendarManagement() {
                 res[date] = {
                     ...selectedBarber.workingHours[dayOfWeek],
                     ...uniqueWorkingHours[date],
+                    start: uniqueWorkingHours[date]?.start ?? selectedBarber.workingHours[dayOfWeek].start,
+                    end: uniqueWorkingHours[date]?.end ?? selectedBarber.workingHours[dayOfWeek].end,
                 };
             });
 
@@ -56,6 +77,70 @@ export default function CalendarManagement() {
         return null;
     }, [uniqueWorkingHours, selectedBarber]);
 
+    const appointmentFields = [
+        {
+            name: "clientName",
+            label: "שם לקוח",
+            required: true,
+        },
+        {
+            name: "clientPhoneNumber",
+            label: "טלפון",
+            required: true,
+        },
+        {
+            name: "date",
+            label: "תאריך",
+            type: "date",
+            required: true,
+        },
+        {
+            name: "time",
+            label: "שעה",
+            type: "time",
+            required: true,
+        },
+        {
+            name: "barberId",
+            label: "ספר",
+            type: "select",
+            required: true,
+            options: barbers?.map((barber) => ({
+                value: barber.id,
+                label: `${barber.firstName} ${barber.lastName}`
+            })), // This should be populated with available services
+        },
+        {
+            name: "serviceId",
+            label: "שירות",
+            type: "select",
+            required: true,
+            options: services?.map((service) => ({value: service.id, label: service.name})), // This should be populated
+            // with available services
+        },
+    ];
+
+    const dailyScheduleFields = [
+        {
+            name: 'regularHours',
+            label: 'שעות פעילות קבועות',
+            required: false,
+            customComponent: 'text',
+        },
+        {
+            name: "start",
+            label: "שעת פתיחה",
+            type: "time",
+            required: false,
+        },
+        {
+            name: "end",
+            label: "שעת סגירה",
+            type: "time",
+            required: false,
+        },
+    ];
+
     const initialAppointmentFormData = {
         clientName: '',
         clientPhoneNumber: '',
@@ -63,6 +148,11 @@ export default function CalendarManagement() {
         time: "",
         serviceId: services?.[0]?.id,
         barberId: barbers?.[0]?.id,
+    };
+
+    const initialDailyScheduleFormData = {
+        start: '',
+        end: '',
     };
 
     const [formData, setFormData] = useState();
@@ -106,19 +196,10 @@ export default function CalendarManagement() {
 
     const debouncedLoadWeeklyAppointments = useMemo(() => debounce(loadWeeklyAppointments, 500, {
         leading: false,
-        trailing: true
+        trailing: true,
     }), [loadWeeklyAppointments]);
 
-    useEffect(() => {
-        console.log(isLoadingCalendar);
-    }, [isLoadingCalendar]);
-
-    useEffect(() => {
-        console.log(weeklySchedule);
-    }, [weeklySchedule]);
-
     const loadUniqueWorkingHours = useCallback((startOfTheWeek) => {
-        console.log('in')
         if (selectedBarber && startOfTheWeek) {
             setIsLoadingCalendar((prev) => ({...prev, uniqueWorkingHours: true}));
             UniqueWorkingHours.get({
@@ -166,23 +247,74 @@ export default function CalendarManagement() {
 
     };
 
-    const handleOpenDialog = (item = null, additionalFields = {}) => {
+    const handleOpenDialog = (item = null, title, dialogFields, initialFormData = {}, additionalFields = {}, handleEdit, handleAdd = null, handleDelete = null) => {
         if (item) {
             setEditingItem(item);
-            setFormData(item);
+            setFormData({...item, ...additionalFields});
         } else {
             setEditingItem(null);
-            setFormData({...initialAppointmentFormData, ...additionalFields});
+            setFormData({...initialFormData, ...additionalFields});
         }
-        setOpenDialog(true);
+        setDataDialog({
+            isOpen: true,
+            title,
+            fields: dialogFields,
+            handleEdit,
+            handleAdd,
+            handleDelete,
+        });
     };
 
     const handleOpenAppointmentDialog = (item = null, date, time) => {
-        handleOpenDialog(item, {date, time});
+        handleOpenDialog(
+            item,
+            `${item ? 'ערוך' : 'הוסף'} תור`,
+            appointmentFields,
+            initialAppointmentFormData,
+            {
+                date,
+                time,
+            },
+            handleEditAppointment,
+            handleAddAppointment,
+            (id) => handleDeleteAppointment(id),
+        );
+    };
+
+    const handleOpenDailyScheduleDialog = (date) => {
+        const {start: staticStart, end: staticEnd} = selectedBarber.workingHours[WEEK_DAYS_IN_ORDER[getDay(date)]];
+        const {
+            start: uniqueStart,
+            end: uniqueEnd,
+            ...restUnique
+        } = uniqueWorkingHours[format(date, 'yyyy-MM-dd')] ?? {};
+        handleOpenDialog(
+            {
+                start: uniqueStart ?? '',
+                end: uniqueEnd ?? '',
+                ...restUnique,
+                date,
+                barberId: selectedBarber.id,
+            },
+            'קביעת לו"ז מיוחד',
+            dailyScheduleFields,
+            initialDailyScheduleFormData,
+            {regularHours: `שעות פעילות קבועות: ${staticEnd} - ${staticStart}`},
+            handleEditDailySchedule,
+            null,
+            null,
+        );
     };
 
     const handleCloseDialog = () => {
-        setOpenDialog(false);
+        setDataDialog({
+            isOpen: false,
+            title: '',
+            fields: [],
+            handleEdit: null,
+            handleAdd: null,
+            handleDelete: null,
+        });
         setEditingItem(null);
     };
 
@@ -194,20 +326,7 @@ export default function CalendarManagement() {
         }));
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("אתם בטוחים שברצונכם למחוק את התור?")) {
-            try {
-                await new Appointment({id}).delete();
-            } catch (error) {
-                setError("Failed to delete appointment");
-            } finally {
-                loadWeeklyAppointments(startOfTheWeek);
-            }
-        }
-        handleCloseDialog();
-    };
-
-    const handleAdd = async (formData) => {
+    const handleAddAppointment = async (formData) => {
         try {
             await new Appointment(formData).save();
         } catch (error) {
@@ -217,7 +336,7 @@ export default function CalendarManagement() {
         }
     };
 
-    const handleEdit = async (id, formData) => {
+    const handleEditAppointment = async (id, formData) => {
         try {
             const {barberId, serviceId} = formData;
 
@@ -234,62 +353,69 @@ export default function CalendarManagement() {
         }
     };
 
+    const handleDeleteAppointment = async (id) => {
+        if (window.confirm("אתם בטוחים שברצונכם למחוק את התור?")) {
+            try {
+                await new Appointment({id}).delete();
+            } catch (error) {
+                setError("Failed to delete appointment");
+            } finally {
+                loadWeeklyAppointments(startOfTheWeek);
+            }
+            handleCloseDialog();
+        }
+    };
+
+    const handleEditDailySchedule = async (_, formData) => {
+        try {
+            const {date, start, end} = formData;
+            await new UniqueWorkingHours({
+                ...uniqueWorkingHours[format(date, 'yyyy-MM-dd')],
+                ...formData,
+                start: start === '' ? null : start,
+                end: end === '' ? null : end,
+                date,
+                barberId: selectedBarber.id,
+            }).save();
+        } catch (error) {
+            setError("Failed to update daily schedule");
+            throw error;
+        } finally {
+            loadUniqueWorkingHours(startOfTheWeek);
+        }
+    };
+
+    const handleSetMiddayWindow = async (isAdd, date, time) => {
+        try {
+            const prev = uniqueWorkingHours[format(date, 'yyyy-MM-dd')];
+            await new UniqueWorkingHours({
+                ...prev,
+                date,
+                barberId: selectedBarber.id,
+                middayWindows: isAdd ? [...(prev?.middayWindows ?? []), time] : [...prev?.middayWindows?.toSpliced(prev?.middayWindows.indexOf(time), 1)],
+            }).save();
+        } catch (error) {
+            setError("Failed to set midday window");
+            throw error;
+        } finally {
+            setCellDialog({isOpen: false, clickedCell: null});
+            loadUniqueWorkingHours(startOfTheWeek);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             if (editingItem) {
-                await handleEdit(editingItem.id, formData);
+                await dataDialog.handleEdit?.(editingItem.id, formData);
             } else {
-                await handleAdd(formData);
+                await dataDialog.handleAdd?.(formData);
             }
             handleCloseDialog();
         } catch (error) {
             console.error('Failed to save item:', error);
         }
     };
-
-    const appointmentFields = [
-        {
-            name: "clientName",
-            label: "שם לקוח",
-            required: true,
-        },
-        {
-            name: "clientPhoneNumber",
-            label: "טלפון",
-            required: true,
-        },
-        {
-            name: "date",
-            label: "תאריך",
-            type: "date",
-            required: true,
-        },
-        {
-            name: "time",
-            label: "שעה",
-            type: "time",
-            required: true,
-        },
-        {
-            name: "barberId",
-            label: "ספר",
-            type: "select",
-            required: true,
-            options: barbers?.map((barber) => ({
-                value: barber.id,
-                label: `${barber.firstName} ${barber.lastName}`
-            })), // This should be populated with available services
-        },
-        {
-            name: "serviceId",
-            label: "שירות",
-            type: "select",
-            required: true,
-            options: services?.map((service) => ({value: service.id, label: service.name})), // This should be populated
-            // with available services
-        },
-    ];
 
     return (
         <Box>
@@ -324,71 +450,110 @@ export default function CalendarManagement() {
                     </div>
                 }
             </div>
-            <div>
-                <WeekView isMobile={isMobile}
-                          isLoadingCalendar={Object.values(isLoadingCalendar).reduce((prev, curr) => prev || curr)}
-                          onReload={() => {
-                              setIsLoadingCalendar((prev) => ({...prev, appointments: true}));
-                              debouncedLoadWeeklyAppointments(startOfTheWeek);
-                          }}
-                          onStartOfWeekChange={setStartOfTheWeek}
-                          locale={{code: 'he-IL', localize: localizeIL}}
-                          weekStartsOn={0}
-                          getWeeklySchedule={() => weeklySchedule ? Object.values(weeklySchedule ?? {}) : null}
-                          disabledCell={(date) => {
-                              const day = format(date, 'yyyy-MM-dd');
-                              const hour = format(date, 'HH:mm');
+            <WeekView isMobile={isMobile}
+                      isLoadingCalendar={Object.values(isLoadingCalendar).reduce((prev, curr) => prev || curr)}
+                      onReload={() => {
+                          setIsLoadingCalendar((prev) => ({...prev, appointments: true}));
+                          debouncedLoadWeeklyAppointments(startOfTheWeek);
+                      }}
+                      onStartOfWeekChange={setStartOfTheWeek}
+                      locale={{code: 'he-IL', localize: localizeIL}}
+                      weekStartsOn={0}
+                      getWeeklySchedule={() => weeklySchedule ? Object.values(weeklySchedule ?? {}) : null}
+                      windowCell={(date) => {
+                          const day = format(date, 'yyyy-MM-dd');
+                          const hour = format(date, 'HH:mm');
 
-                              return (
-                                  // isBefore(date, new Date()) ||
-                                  (weeklySchedule?.[day] && (hour < weeklySchedule[day].start || hour >= weeklySchedule[day].end || weeklySchedule[day].middayWindows?.includes(hour)))
-                              );
-                          }}
-                          disabledWeek={(startDayOfWeek) => {
-                              return isBefore(startDayOfWeek, startOfWeek(addWeeks(new Date(), -2)));
-                          }}
-                          events={
-                              appointments.map(({id, date, time, service}) => {
-                                  const startDate = new Date(`${date.split("T")[0]}T${time}`);
+                          return (weeklySchedule?.[day] && weeklySchedule[day].middayWindows?.includes(hour));
+                      }}
+                      disabledCell={(date) => {
+                          const day = format(date, 'yyyy-MM-dd');
+                          const hour = format(date, 'HH:mm');
 
-                                  return {
-                                      id,
-                                      title: service.name,
-                                      startDate,
-                                      endDate: addMinutes(startDate, service.duration_minutes),
-                                  };
-                              })
+                          return (
+                              // isBefore(date, new Date()) ||
+                              (weeklySchedule?.[day] && (hour < weeklySchedule[day].start || hour >= weeklySchedule[day].end))
+                          );
+                      }}
+                      disabledWeek={(startDayOfWeek) => {
+                          return isBefore(startDayOfWeek, startOfWeek(addWeeks(new Date(), -2)));
+                      }}
+                      events={
+                          appointments.map(({id, date, time, service}) => {
+                              const startDate = new Date(`${date.split("T")[0]}T${time}`);
+
+                              return {
+                                  id,
+                                  title: service.name,
+                                  startDate,
+                                  endDate: addMinutes(startDate, service.duration_minutes),
+                              };
+                          })
+                      }
+                      onDayClick={
+                          (date) => {
+                              handleOpenDailyScheduleDialog(date);
                           }
-                          onDayClick={
-                              (date) => {
-                                  handleOpenDialog(null);
-                              }
+                      }
+                      onCellClick={
+                          (cell) => {
+                              setCellDialog(() => ({isOpen: true, clickedCell: cell}))
                           }
-                          onCellClick={
-                              (cell) => {
-                                  handleOpenAppointmentDialog(null, format(cell.date, 'yyyy-MM-dd'), cell.hourAndMinute);
-                              }
+                      }
+                      onEventClick={
+                          (event) => {
+                              handleOpenAppointmentDialog(appointments.find(({id}) => event.id === id), format(event.startDate, 'yyyy-MM-dd'), format(event.startDate, 'HH:mm'));
                           }
-                          onEventClick={
-                              (event) => {
-                                  handleOpenAppointmentDialog(appointments.find(({id}) => event.id === id));
-                              }
-                          }
-                />
-            </div>
+                      }
+            />
+            <Dialog open={cellDialog.isOpen}
+                    onClose={() => setCellDialog({isOpen: false, clickedCell: null})}>
+                {
+                    cellDialog.clickedCell && (
+                        cellDialog.clickedCell.window ?
+                            <Button variant={'contained'}
+                                    color={'secondary'}
+                                    sx={{margin: 5}}
+                                    onClick={() => handleSetMiddayWindow(false, cellDialog.clickedCell.date, cellDialog.clickedCell.hourAndMinute)}>
+                                הגדר זמן כפעיל
+                            </Button> :
+                            <>
+                                <Button variant={'contained'}
+                                        color={'primary'}
+                                        sx={{margin: 5}}
+                                        onClick={() => handleOpenAppointmentDialog(null, format(cellDialog.clickedCell.date, 'yyyy-MM-dd'), cellDialog.clickedCell.hourAndMinute)}>
+                                    קבע תור
+                                </Button>
+                                <Button variant={'contained'}
+                                        color={'info'}
+                                        sx={{margin: 5}}
+                                        onClick={() => handleSetMiddayWindow(true, cellDialog.clickedCell.date, cellDialog.clickedCell.hourAndMinute)}>
+                                    הגדר זמן כסגור
+                                </Button>
+                            </>
+                    )
+                }
+            </Dialog>
             {
                 formData && appointmentFields &&
                 <ManagementDialog
-                    open={openDialog}
+                    open={dataDialog.isOpen}
                     onClose={handleCloseDialog}
                     isEditing={editingItem}
-                    title={`${editingItem ? "ערוך" : "הוסף"} תור`}
+                    title={dataDialog.title}
                     formData={formData}
                     onFormChange={handleFormChange}
-                    onDelete={() => handleDelete(editingItem?.id)}
+                    onDelete={dataDialog.handleDelete && (() => dataDialog.handleDelete(editingItem.id))}
                     onSubmit={handleSubmit}
-                    fields={appointmentFields}
+                    fields={dataDialog.fields}
                     isMobile={isMobile}
+                    customComponents={{
+                        text: ({value}) => (
+                            <span>
+                                {value}
+                            </span>
+                        ),
+                    }}
                 />
             }
             <Snackbar open={error}

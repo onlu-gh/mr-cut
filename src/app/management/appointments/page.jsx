@@ -99,8 +99,6 @@ export default function AppointmentsManagementPage() {
         try {
             const {barberId, serviceId} = formData;
 
-            console.log(formData);
-
             await new Appointment({
                 ...formData,
                 barber: barbers.find(b => b.id === barberId),
