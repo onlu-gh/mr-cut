@@ -1,10 +1,12 @@
+import {format} from 'date-fns';
+
 export class Appointment {
     constructor(data) {
         this.id = data.id;
         this.clientId = data.clientId ?? data.client_id;
         this.clientName = data.clientName ?? data.client_name;
         this.clientPhoneNumber = data.clientPhoneNumber ?? data.client_phone_number;
-        this.date = data.date?.split("T")[0];
+        this.date = data.date ? format(new Date(data.date), 'yyyy-MM-dd') : null;
         this.time = data.time;
         this.serviceId = data.service?.id ?? data.serviceId;
         this.barberId = data.barber?.id ?? data.barberId;
@@ -15,11 +17,12 @@ export class Appointment {
         this.barber = data.barber;
     }
 
-    static async getAll({barberId, date} = {}) {
+    static async get({barberId, startDate, endDate} = {}) {
         try {
             const url = new URL('/api/appointments', window.location.origin);
             if (barberId) url.searchParams.append('barberId', barberId);
-            if (date) url.searchParams.append('date', date);
+            if (startDate) url.searchParams.append('startDate', startDate);
+            if (endDate) url.searchParams.append('endDate', endDate);
 
             const response = await fetch(url);
             if (!response.ok) throw new Error('Failed to fetch appointments');

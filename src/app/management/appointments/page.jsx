@@ -5,7 +5,7 @@ import {useRouter} from "next/navigation";
 import Cookies from "js-cookie";
 import {Appointment} from "@/entities/Appointment";
 import ManagementSection from "@/components/ManagementSection";
-import {format} from "date-fns";
+import {endOfDay, format, startOfDay} from "date-fns";
 import {Service} from '@/entities/Service';
 import {getTranslations} from '@/translations';
 import {Barber} from "@/entities/Barber";
@@ -34,8 +34,9 @@ export default function AppointmentsManagementPage() {
 
     const loadAppointments = useCallback(async () => {
         try {
-            const appointmentsList = await Appointment.getAll({
-                date: selectedDate,
+            const appointmentsList = await Appointment.get({
+                startDate: startOfDay(selectedDate),
+                endDate: endOfDay(selectedDate),
             });
 
             let filteredAppointments = userData.role === "BARBER" ? appointmentsList.filter((a)=>a.barberId === userData.id) : appointmentsList;
@@ -45,7 +46,7 @@ export default function AppointmentsManagementPage() {
         } catch (error) {
             setError("Failed to load appointments");
         }
-    }, [selectedDate]);
+    }, [selectedDate, userData.id, userData.role]);
 
     const loadServices = async () => {
         try {
@@ -98,8 +99,6 @@ export default function AppointmentsManagementPage() {
         try {
             const {barberId, serviceId} = formData;
 
-            console.log(formData);
-
             await new Appointment({
                 ...formData,
                 barber: barbers.find(b => b.id === barberId),
@@ -113,7 +112,7 @@ export default function AppointmentsManagementPage() {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this appointment?")) {
+        if (window.confirm("אתם בטוחים שברצונכם למחוק את התור?")) {
             try {
                 await new Appointment({id}).delete();
                 await loadAppointments();
@@ -191,8 +190,8 @@ export default function AppointmentsManagementPage() {
         {
             name: "time",
             label: "שעה",
-            type: "time",
             required: true,
+            customComponent: 'time',
         },
         {
             name: "barberId",

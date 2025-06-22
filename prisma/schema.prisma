@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -19,41 +19,54 @@ model User {
 }
 
 model Barber {
-  id             String   @id @default(cuid())
-  firstName      String?
-  lastName       String?
-  phone_number   String   @unique
-  specialties    String[]
-  working_hours  Json
-  photo_url      String?
-  bio            String?
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
-  user           User     @relation(fields: [id], references: [id])
-  appointments   Appointment[]
+  id                   String               @id @default(cuid())
+  firstName            String?
+  lastName             String?
+  phone_number         String               @unique
+  specialties          String[]
+  working_hours        Json
+  unique_working_hours UniqueWorkingHours[]
+  photo_url            String?
+  bio                  String?
+  created_at           DateTime             @default(now())
+  updated_at           DateTime             @updatedAt
+  user                 User                 @relation(fields: [id], references: [id])
+  appointments         Appointment[]
+}
+
+model UniqueWorkingHours {
+  date      DateTime
+  barber_id String
+
+  barber         Barber   @relation(fields: [barber_id], references: [id])
+  start          String?
+  end            String?
+  midday_windows String[]
+
+  @@id(name: "id", [date, barber_id])
 }
 
 model Service {
-  id              String   @id @default(cuid())
-  name            String
+  id               String        @id @default(cuid())
+  name             String
   duration_minutes Int
-  price           Float
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  appointments    Appointment[]
+  price            Float
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
+  appointments     Appointment[]
 }
 
 model Appointment {
-  id                    String   @id @default(cuid())
-  client_name           String
-  client_phone_number   String
-  barber_id             String
-  service_id            String
-  date                  DateTime
-  time                  String
-  status                String   @default("PENDING")
-  created_at            DateTime @default(now())
-  updated_at            DateTime @updatedAt
-  barber                Barber   @relation(fields: [barber_id], references: [id])
-  service               Service  @relation(fields: [service_id], references: [id])
-} 
+  id                  String   @id @default(cuid())
+  client_name         String
+  client_phone_number String
+  barber_id           String
+  service_id          String
+  date                DateTime
+  time                String
+  status              String   @default("PENDING")
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+  barber              Barber   @relation(fields: [barber_id], references: [id])
+  service             Service  @relation(fields: [service_id], references: [id])
+}
