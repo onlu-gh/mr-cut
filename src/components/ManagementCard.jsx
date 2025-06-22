@@ -14,7 +14,7 @@ export default function ManagementCard({
   onDelete,
 }) {
   const renderCardContent = () => (
-    <CardContent>
+    <CardContent sx={{backgroundColor: 'white' }}>
       <Box
         sx={{
           display: 'flex',
@@ -43,7 +43,7 @@ export default function ManagementCard({
       {(onEdit || onDelete) && (
         <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
           {onEdit && (
-            <Button size="small" onClick={onEdit}>
+            <Button color="secondary" size="small" onClick={onEdit}>
                 ערוך
             </Button>
           )}

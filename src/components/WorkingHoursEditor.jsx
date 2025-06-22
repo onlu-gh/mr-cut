@@ -53,6 +53,7 @@ export default function WorkingHoursEditor({
               <FormControlLabel
                 control={
                   <Checkbox
+                      color={'secondary'}
                     checked={workingHours[day.key]?.isWorking !== false}
                     onChange={(e) => handleWorkingDayChange(day.key, e.target.checked)}
                   />

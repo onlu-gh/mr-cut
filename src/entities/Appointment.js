@@ -1,10 +1,12 @@
+import {format} from 'date-fns';
+
 export class Appointment {
     constructor(data) {
         this.id = data.id;
         this.clientId = data.clientId ?? data.client_id;
         this.clientName = data.clientName ?? data.client_name;
         this.clientPhoneNumber = data.clientPhoneNumber ?? data.client_phone_number;
-        this.date = data.date?.split("T")[0];
+        this.date = data.date ? format(new Date(data.date), 'yyyy-MM-dd') : null;
         this.time = data.time;
         this.serviceId = data.service?.id ?? data.serviceId;
         this.barberId = data.barber?.id ?? data.barberId;

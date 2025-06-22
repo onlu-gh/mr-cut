@@ -3,8 +3,7 @@
 import {useEffect} from 'react';
 import {usePathname, useRouter} from 'next/navigation';
 import Cookies from 'js-cookie';
-import {Box, Button, Container} from '@mui/material';
-import {ArrowRight} from 'lucide-react';
+import {Box, Container} from '@mui/material';
 import {getTranslations} from '@/translations';
 
 export default function ManagementLayout({ children }) {
@@ -32,20 +31,20 @@ export default function ManagementLayout({ children }) {
   return (
       <Container maxWidth="lg">
         <Box sx={{ my: 4 }}>
-          {isSubFolder && (
-            <Button
-              onClick={() => router.push('/management')}
-              sx={{
-                mb: 3,
-                color: '#2D5043',
-                '&:hover': {
-                  bgcolor: 'rgba(45, 80, 67, 0.1)',
-                },
-              }}>
-              <ArrowRight />
-              {t.backToManagement}
-            </Button>
-          )}
+          {/*{isSubFolder && (*/}
+          {/*  <Button*/}
+          {/*    onClick={() => router.push('/management')}*/}
+          {/*    sx={{*/}
+          {/*      mb: 3,*/}
+          {/*      color: '#2D5043',*/}
+          {/*      '&:hover': {*/}
+          {/*        bgcolor: 'rgba(45, 80, 67, 0.1)',*/}
+          {/*      },*/}
+          {/*    }}>*/}
+          {/*    <ArrowRight />*/}
+          {/*    {t.backToManagement}*/}
+          {/*  </Button>*/}
+          {/*)}*/}
           {children}
         </Box>
       </Container>

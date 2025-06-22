@@ -24,9 +24,10 @@ const DEFAULT_DAY_END = '23:59';
 export default function useWeekView({
                                         initialDate,
                                         minuteStep = 30,
-                                        weekStartsOn = 1,
+                                        weekStartsOn = 0,
                                         locale,
                                         getWeeklySchedule,
+                                        windowCell,
                                         disabledCell,
                                         disabledDay,
                                         disabledWeek,
@@ -37,6 +38,7 @@ export default function useWeekView({
                                         weekStartsOn?: Day;
                                         locale?: Locale;
                                         getWeeklySchedule?: (startDayOfWeek: Date) => WorkingHours[];
+                                        windowCell?: (date: Date) => boolean;
                                         disabledCell?: (date: Date) => boolean;
                                         disabledDay?: (date: Date) => boolean;
                                         disabledWeek?: (startDayOfWeek: Date) => boolean;
@@ -66,17 +68,21 @@ export default function useWeekView({
         }
     }, [getWeeklySchedule, startOfTheWeek]);
 
+    const nextWeek = useMemo(() => addDays(startOfTheWeek, DEFAULT_WEEK_DAYS_AMOUNT), [startOfTheWeek]);
+    const previousWeek = useMemo(() => addDays(startOfTheWeek, -DEFAULT_WEEK_DAYS_AMOUNT), [startOfTheWeek]);
+
+    const isPreviousWeekDisabled = useMemo(() => disabledWeek && disabledWeek(previousWeek), [disabledWeek, previousWeek]);
+    const isNextWeekDisabled = useMemo(() => disabledWeek && disabledWeek(nextWeek), [disabledWeek, nextWeek]);
+
     const weekDaysAmount = weeklySchedule.weekDaysAmount ?? DEFAULT_WEEK_DAYS_AMOUNT;
 
-    const nextWeek = () => {
-        const nextWeek = addDays(startOfTheWeek, weekDaysAmount);
-        if (disabledWeek && disabledWeek(nextWeek)) return;
+    const showNextWeek = () => {
+        if (isNextWeekDisabled) return;
         setStartOfTheWeek(nextWeek);
     };
 
-    const previousWeek = () => {
-        const previousWeek = addDays(startOfTheWeek, -weekDaysAmount);
-        if (disabledWeek && disabledWeek(previousWeek)) return;
+    const showPreviousWeek = () => {
+        if (isPreviousWeekDisabled) return;
         setStartOfTheWeek(previousWeek);
     };
 
@@ -115,6 +121,7 @@ export default function useWeekView({
                 hour: format(hour, "HH", {locale}),
                 minute: format(hour, "mm", {locale}),
                 hourAndMinute: format(hour, "HH:mm", {locale}),
+                window: windowCell ? windowCell(hour) : false,
                 disabled: disabledCell ? disabledCell(hour) : false,
             })),
         }
@@ -142,8 +149,10 @@ export default function useWeekView({
 
     return {
         startOfTheWeek,
-        nextWeek,
-        previousWeek,
+        isNextWeekDisabled,
+        isPreviousWeekDisabled,
+        showNextWeek,
+        showPreviousWeek,
         goToToday,
         days,
         weekNumber,
