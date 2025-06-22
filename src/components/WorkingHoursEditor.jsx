@@ -83,7 +83,7 @@ export default function WorkingHoursEditor({
                                             label="סיום"
                                             minutesStep={30}
                                             timeSteps={{minutes: 30}}
-                                            value={parse(workingHours[day.key]?.start || '09:00', 'HH:mm', new Date())}
+                                            value={parse(workingHours[day.key]?.end || '09:00', 'HH:mm', new Date())}
                                             onChange={(value) => handleTimeChange(day.key, 'start', format(value, 'HH:mm'))}
                                         />
                                     </Grid>

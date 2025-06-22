@@ -53,8 +53,8 @@ export default function useWeekView({
         const weekDaysAmount = schedule?.length;
         const extremities = schedule?.length ?
             {
-                earliestStart: schedule.map((day) => day.start ?? DEFAULT_DAY_START).reduce((prev, curr) => curr < prev ? curr : prev).split(':').map(Number),
-                latestEnd: schedule.map((day) => day.end ?? DEFAULT_DAY_END).reduce((prev, curr) => curr > prev ? curr : prev).split(':').map(Number),
+                earliestStart: schedule.filter((day) => day.start != null).map((day) => day.start).reduce((prev, curr) => curr < prev ? curr : prev).split(':').map(Number),
+                latestEnd: schedule.filter((day) => day.end != null).map((day) => day.end).reduce((prev, curr) => curr > prev ? curr : prev).split(':').map(Number),
             } :
             {
                 earliestStart: DEFAULT_DAY_START.split(':').map(Number),
