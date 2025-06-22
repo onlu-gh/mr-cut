@@ -307,6 +307,7 @@ export default function CalendarManagement() {
     };
 
     const handleCloseDialog = () => {
+        setCellDialog({isOpen: false, clickedCell: null})
         setDataDialog({
             isOpen: false,
             title: '',
@@ -497,7 +498,7 @@ export default function CalendarManagement() {
                       }
                       onCellClick={
                           (cell) => {
-                              setCellDialog(() => ({isOpen: true, clickedCell: cell}))
+                              setCellDialog({isOpen: true, clickedCell: cell})
                           }
                       }
                       onEventClick={
