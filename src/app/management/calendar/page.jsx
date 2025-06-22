@@ -463,7 +463,6 @@ export default function CalendarManagement() {
                       getWeeklySchedule={() => weeklySchedule ? Object.values(weeklySchedule ?? {}) : null}
                       disabledDay={
                           (date) => {
-                              console.log(weeklySchedule);
                               const day = format(date, 'yyyy-MM-dd');
 
                               return !weeklySchedule?.[day]?.start && !weeklySchedule?.[day]?.end;
