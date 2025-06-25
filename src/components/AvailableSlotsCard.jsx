@@ -17,7 +17,6 @@ const APPOINTMENT_TIME_SLOT_TO_HOUR_RATIO = 0.5;
 
 const AvailableSlotsCard = ({selectedBarber, selectedDate, onSlotSelect}) => {
     const [availableSlots, setAvailableSlots] = useState([]);
-    const [nextWorkingDay, setNextWorkingDay] = useState(null);
     const [loading, setLoading] = useState(false);
     const [selectedSlot, setSelectedSlot] = useState(null);
     const [_, setExistingAppointments] = useState([]);
@@ -51,11 +50,12 @@ const AvailableSlotsCard = ({selectedBarber, selectedDate, onSlotSelect}) => {
                 // Generate available slots based on working hours
                 const generateSlots = (startTime, endTime) => {
                     const slots = [];
-                    const [startHour] = startTime.split(':').map(Number);
-                    const [endHour] = endTime.split(':').map(Number);
+                    const [startHour, startMinutes] = startTime.split(':').map(Number);
+                    const [endHour, endMinutes] = endTime.split(':').map(Number);
 
-                    for (let hour = startHour; hour < endHour; hour += APPOINTMENT_TIME_SLOT_TO_HOUR_RATIO) {
-                        const timeString = `${Math.floor(hour).toString().padStart(2, '0')}:${hour%1 > 0 ? hour%1 * 60 : '00'}`;
+                    for (let hour = startHour + startMinutes / 60; hour < endHour + endMinutes / 60; hour += APPOINTMENT_TIME_SLOT_TO_HOUR_RATIO) {
+                        const minutes = (hour % 1 > 0 ? hour % 1 * 60 : 0);
+                        const timeString = `${Math.floor(hour).toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
                         // Only add future slots for today
                         if (isToday(selectedDate) && hour <= currentHour) continue;
                         slots.push(timeString);
@@ -67,19 +67,19 @@ const AvailableSlotsCard = ({selectedBarber, selectedDate, onSlotSelect}) => {
                 const selectedDateObj = selectedDate ? parseISO(selectedDate) : today;
                 const dayOfWeek = format(selectedDateObj, 'EEEE').toLowerCase();
                 const dayWorkingHours = {
-                    ...barberData.working_hours[dayOfWeek],
+                    ...barberData.workingHours?.[dayOfWeek],
                     ...uniqueWorkingHours,
-                    start: uniqueWorkingHours?.start ?? barberData.working_hours[dayOfWeek].start,
-                    end: uniqueWorkingHours?.end ?? barberData.working_hours[dayOfWeek].end,
+                    start: uniqueWorkingHours?.start ?? barberData.workingHours?.[dayOfWeek]?.start,
+                    end: uniqueWorkingHours?.end ?? barberData.workingHours?.[dayOfWeek]?.end,
                 };
 
-                if (dayWorkingHours) {
+                if (dayWorkingHours.start && dayWorkingHours.end) {
                     const slots = generateSlots(dayWorkingHours.start, dayWorkingHours.end);
 
                     // Filter out booked slots
                     const bookedTimes = appointments.filter(apt => (
                         apt.barber_id === selectedBarber.id
-                    )).map((apt=>(apt.time)));
+                    )).map((apt => (apt.time)));
 
                     // Filter out any slots that are already booked
                     const availableSlots = slots.filter(slot => !bookedTimes.includes(slot) && !dayWorkingHours.middayWindows?.includes(slot));
@@ -88,16 +88,6 @@ const AvailableSlotsCard = ({selectedBarber, selectedDate, onSlotSelect}) => {
                 } else {
                     setAvailableSlots([]);
                 }
-
-                // Find next working day
-                let nextDay = today;
-                let daysChecked = 0;
-                while (!barberData.working_hours[format(nextDay, 'EEEE').toLowerCase()] && daysChecked < 14) {
-                    nextDay = addDays(nextDay, 1);
-                    daysChecked++;
-                }
-                setNextWorkingDay(nextDay);
-
             } catch (error) {
                 console.error('Error fetching data:', error);
                 setAvailableSlots([]);
@@ -140,12 +130,6 @@ const AvailableSlotsCard = ({selectedBarber, selectedDate, onSlotSelect}) => {
                     <Typography>טוען תורים...</Typography>
                 ) : (
                     <Box>
-                        {!selectedDate && nextWorkingDay && (
-                            <Typography variant="h6" className="mb-4">
-                                Next available: {formatDateDisplay(nextWorkingDay)}
-                            </Typography>
-                        )}
-
                         {availableSlots.length > 0 ? (
                             <Box className="mt-6">
                                 <Grid container spacing={2}>
@@ -183,9 +167,9 @@ const AvailableSlotsCard = ({selectedBarber, selectedDate, onSlotSelect}) => {
                             </Box>
                         ) : (
                             (selectedDate && selectedBarber) && (
-                            <Typography>
-                                {`אין תורים זמינים ל${selectedBarber.firstName} ${selectedBarber.lastName} בתאריך הנבחר`}
-                            </Typography>
+                                <Typography>
+                                    {`אין תורים זמינים ל${selectedBarber.firstName} ${selectedBarber.lastName} בתאריך הנבחר`}
+                                </Typography>
                             )
                         )}
                     </Box>
