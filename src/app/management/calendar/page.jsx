@@ -299,7 +299,7 @@ export default function CalendarManagement() {
             'קביעת לו"ז מיוחד',
             dailyScheduleFields,
             initialDailyScheduleFormData,
-            {regularHours: `שעות פעילות קבועות: ${staticEnd} - ${staticStart}`},
+            {regularHours: `שעות פעילות קבועות: ${staticEnd && staticEnd ? `${staticEnd} - ${staticStart}` : 'סגור'}`},
             handleEditDailySchedule,
             null,
             null,
