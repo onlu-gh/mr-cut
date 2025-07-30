@@ -1,6 +1,8 @@
 import {NextResponse} from 'next/server';
 import {AppointmentService} from '@/services/appointment.service';
 import {prisma} from '@/lib/prisma';
+import {MessagingService} from '@/services/messaging.service';
+import {Appointment} from '@/entities/Appointment';
 
 const appointmentService = new AppointmentService();
 
@@ -54,7 +56,7 @@ export async function POST(request) {
 
         const {client_name, client_phone_number, barber_id, service_id, date, time, status} = data;
 
-        if(!(client_name && client_phone_number && barber_id && service_id && date && time)){
+        if (!(client_name && client_phone_number && barber_id && service_id && date && time)) {
             return NextResponse.json(
                 {error: 'Missing appointment details'},
                 {status: 400}
@@ -90,17 +92,18 @@ export async function POST(request) {
             include: {
                 service: true,
                 barber: {
-                    include: {
-                        user: {
-                            select: {
-                                firstName: true,
-                                lastName: true
-                            }
-                        }
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                        phone_number: true
                     }
                 }
             }
         });
+        const createdAppointment = new Appointment(appointment);
+
+        void MessagingService.sendAppointmentConfirmation(createdAppointment);
+        void MessagingService.sendAppointmentNotification(createdAppointment);
 
         return NextResponse.json(appointment, {status: 201});
     } catch (error) {

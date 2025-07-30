@@ -1,11 +1,11 @@
 "use client";
 
-import {useState, useEffect, useCallback, useMemo} from "react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 import {useRouter} from "next/navigation";
 import Cookies from "js-cookie";
 import {Appointment} from "@/entities/Appointment";
 import ManagementSection from "@/components/ManagementSection";
-import {format} from "date-fns";
+import {format, startOfDay} from "date-fns";
 import {Service} from '@/entities/Service';
 import {getTranslations} from '@/translations';
 import {Barber} from "@/entities/Barber";
@@ -33,6 +33,7 @@ export default function CustomerAppointmentsManagementPage() {
         try {
             const appointmentsList = await Appointment.getAllByClientPhoneNumber({
                 clientPhoneNumber: userData.phone_number,
+                startDate: startOfDay(new Date()),
             });
 
             let filteredAppointments = userData.role === "BARBER" ? appointmentsList.filter((a) => a.barberId === userData.id) : appointmentsList;

@@ -530,7 +530,7 @@ export default function CalendarManagement() {
                                         color={'primary'}
                                         sx={{margin: 5}}
                                         onClick={() => handleOpenAppointmentDialog(null, format(cellDialog.clickedCell.date, 'yyyy-MM-dd'), cellDialog.clickedCell.hourAndMinute)}>
-                                    קבע תור
+                                    קביעת תור
                                 </Button>
                                 <Button variant={'contained'}
                                         color={'info'}
