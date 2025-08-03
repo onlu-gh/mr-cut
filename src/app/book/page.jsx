@@ -51,6 +51,8 @@ export default function BookPage() {
     const [error, setError] = useState(null);
     const [snackbar, setSnackbar] = useState({open: false, message: "", severity: "success"});
 
+    const isFormFullyFilled = name && phone && selectedDate && selectedBarber && selectedService && selectedDate && selectedTime;
+
     useEffect(() => {
         const loadData = async () => {
             setIsLoading(true);
@@ -86,6 +88,10 @@ export default function BookPage() {
 
         loadData();
     }, [t.failedToLoad, t.failedToLoadData]);
+
+    useEffect(() => {
+        setSelectedTime("");
+    }, [selectedService, selectedBarber, selectedDate]);
 
     const handleSubmit = async () => {
         setShowConfirmation(true);
@@ -250,6 +256,7 @@ export default function BookPage() {
 
                             <AvailableSlotsCard selectedBarber={selectedBarber}
                                                 selectedDate={selectedDate}
+                                                selectedTime={selectedTime}
                                                 onSlotSelect={(time) => setSelectedTime(time)}/>
                         </CardContent>
                     </Card>
@@ -304,6 +311,7 @@ export default function BookPage() {
 
                     <Button
                         variant="contained"
+                        disabled={!isFormFullyFilled}
                         onClick={handleSubmit}
                         sx={{
                             bgcolor: "#2D5043",
