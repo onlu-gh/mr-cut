@@ -27,7 +27,6 @@ export default function EventGrid({
             {(events || [])
                 .filter((event) => isSameWeek(days[0].date, event.startDate))
                 .map((event) => {
-                    console.log(Number(days[0].cells[0].minute))
                     const start =
                         Math.floor(((getHours(event.startDate) - Number(days[0].cells[0].hour)) * 60 +
                             (getMinutes(event.startDate) - Number(days[0].cells[0].minute))) / minuteStep) + 1;

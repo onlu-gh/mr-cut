@@ -171,7 +171,9 @@ export default function CalendarManagement() {
                     setBarbers(barbers);
                     setSelectedBarber(barbers.find((b) => b.id === userData.id));
                 } else if (userData.role === 'BARBER') {
-                    setSelectedBarber(await Barber.getById(userData.id));
+                    const barber = await Barber.getById(userData.id);
+                    setBarbers([barber]);
+                    setSelectedBarber(barber);
                 }
             })();
         }
@@ -270,7 +272,7 @@ export default function CalendarManagement() {
             item,
             `${item ? 'ערוך' : 'הוסף'} תור`,
             appointmentFields,
-            initialAppointmentFormData,
+            {...initialAppointmentFormData, barberId: selectedBarber.id},
             {
                 date,
                 time,
