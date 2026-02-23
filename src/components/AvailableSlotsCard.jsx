@@ -1,24 +1,15 @@
 'use client';
 
-import React, {useState, useEffect} from 'react';
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    Typography,
-    Box,
-    Button,
-    Grid,
-} from '@mui/material';
-import {format, addDays, parseISO, isToday, isTomorrow, startOfDay, endOfDay} from 'date-fns';
+import React, {useEffect, useState} from 'react';
+import {Box, Button, Card, CardContent, CardHeader, Grid, Typography,} from '@mui/material';
+import {endOfDay, format, isToday, parseISO, startOfDay} from 'date-fns';
 import {UniqueWorkingHours} from '@/entities/UniqueWorkingHours';
 
 const APPOINTMENT_TIME_SLOT_TO_HOUR_RATIO = 0.5;
 
-const AvailableSlotsCard = ({selectedBarber, selectedDate, onSlotSelect}) => {
+const AvailableSlotsCard = ({selectedBarber, selectedDate, selectedTime, onSlotSelect}) => {
     const [availableSlots, setAvailableSlots] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [selectedSlot, setSelectedSlot] = useState(null);
     const [_, setExistingAppointments] = useState([]);
 
     useEffect(() => {
@@ -99,12 +90,6 @@ const AvailableSlotsCard = ({selectedBarber, selectedDate, onSlotSelect}) => {
         fetchData();
     }, [selectedBarber, selectedDate]);
 
-    const formatDateDisplay = (date) => {
-        if (isToday(date)) return 'Today';
-        if (isTomorrow(date)) return 'Tomorrow';
-        return format(date, 'EEEE, MMMM d');
-    };
-
     const isSlotAvailable = (slot) => {
         // Check if the slot is in the available slots list
         return availableSlots.includes(slot);
@@ -136,17 +121,16 @@ const AvailableSlotsCard = ({selectedBarber, selectedDate, onSlotSelect}) => {
                                     {availableSlots.map((slot) => (
                                         <Grid item xs={4} key={slot}>
                                             <Button
-                                                variant={selectedSlot === slot ? "contained" : "outlined"}
+                                                variant={selectedTime === slot ? "contained" : "outlined"}
                                                 fullWidth
                                                 onClick={() => {
                                                     if (isSlotAvailable(slot)) {
-                                                        setSelectedSlot(slot);
                                                         onSlotSelect(slot);
                                                     }
                                                 }}
                                                 disabled={!isSlotAvailable(slot)}
                                                 sx={{
-                                                    color: selectedSlot === slot ? 'white' : '#2D5043',
+                                                    color: selectedTime === slot ? 'white' : '#2D5043',
                                                     borderColor: '#2D5043',
                                                     '&:hover': {
                                                         backgroundColor: '#2D5043',

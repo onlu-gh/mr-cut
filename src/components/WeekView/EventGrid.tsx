@@ -27,12 +27,13 @@ export default function EventGrid({
             {(events || [])
                 .filter((event) => isSameWeek(days[0].date, event.startDate))
                 .map((event) => {
+                    console.log(Number(days[0].cells[0].minute))
                     const start =
-                        (getHours(event.startDate) - Number(days[0].cells[0].hour)) * 2 +
-                        Math.floor(getMinutes(event.startDate) / minuteStep);
+                        Math.floor(((getHours(event.startDate) - Number(days[0].cells[0].hour)) * 60 +
+                            (getMinutes(event.startDate) - Number(days[0].cells[0].minute))) / minuteStep) + 1;
                     const end =
-                        (getHours(event.endDate) - Number(days[0].cells[0].hour)) * 2 +
-                        Math.ceil(getMinutes(event.endDate) / minuteStep);
+                        Math.floor(((getHours(event.endDate) - Number(days[0].cells[0].hour)) * 60 +
+                            (getMinutes(event.endDate) - Number(days[0].cells[0].minute))) / minuteStep) + 1;
 
                     const paddingTop =
                         ((getMinutes(event.startDate) % minuteStep) / minuteStep) *
@@ -57,27 +58,27 @@ export default function EventGrid({
                              }}
                         >
                               <span
-                                  className={`absolute inset-0 flex flex-col justify-center items-center rounded-md text-sm leading-none m-[2px] ml-[2.75px] box-border bg-[#B87333] hover:bg-[#c8894c] transition cursor-pointer`}
+                                  className={`absolute inset-0 flex flex-col justify-center items-center rounded-md text-sm leading-none m-[2px] ml-[2.75px] p-[4px] box-border bg-[#B87333] hover:bg-[#c8894c] transition cursor-pointer`}
                                   style={{
                                       height: eventHeight - 4,
                                   }}
                                   onClick={() => onEventClick?.(event)}>
                                     {/*{*/}
-                                    {/*    eventLength >= minuteStep && (*/}
-                                    {/*        <p className="text-white leading-4 text-sm">*/}
-                                    {/*            {format(new Date(event.startDate), "H:mm", {*/}
-                                    {/*                weekStartsOn,*/}
-                                    {/*                locale,*/}
-                                    {/*            })}*/}
-                                    {/*            -*/}
-                                    {/*            {format(new Date(event.endDate), "H:mm", {*/}
-                                    {/*                weekStartsOn,*/}
-                                    {/*                locale,*/}
-                                    {/*            })}*/}
-                                    {/*        </p>*/}
-                                    {/*    )*/}
-                                    {/*}*/}
-                                  <p className={`font-semibold w-[100%] text-white line text-center line-clamp-${Math.floor(eventHeight/rowHeight * 3)} overflow-ellipsis`}>{event.title}</p>
+                                  {/*    eventLength >= minuteStep && (*/}
+                                  {/*        <p className="text-white leading-4 text-sm">*/}
+                                  {/*            {format(new Date(event.startDate), "H:mm", {*/}
+                                  {/*                weekStartsOn,*/}
+                                  {/*                locale,*/}
+                                  {/*            })}*/}
+                                  {/*            -*/}
+                                  {/*            {format(new Date(event.endDate), "H:mm", {*/}
+                                  {/*                weekStartsOn,*/}
+                                  {/*                locale,*/}
+                                  {/*            })}*/}
+                                  {/*        </p>*/}
+                                  {/*    )*/}
+                                  {/*}*/}
+                                  <p className={`font-semibold w-[100%] text-[11px] text-white line text-center leading-5 line-clamp-${Math.floor(eventHeight / rowHeight * 3)} whitespace-pre overflow-ellipsis overflow-hidden`}>{event.title}</p>
                               </span>
                         </div>
                     );
