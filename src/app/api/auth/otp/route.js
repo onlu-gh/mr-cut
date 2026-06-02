@@ -25,18 +25,18 @@ export async function GET(request) {
         return NextResponse.json({throttled: true, expiresAt: existing.expiresAt});
     }
 
-    const code = generateOtp();
-    const otp = await OtpService.upsert(phoneNumber, code);
-
     try {
+        const code = generateOtp();
+        const otp = await OtpService.upsert(phoneNumber, code);
+
         await MessagingService.sendUserOtp({clientPhoneNumber: phoneNumber, code});
+
+        return NextResponse.json({throttled: false, expiresAt: otp.expiresAt});
     } catch {
         await OtpService.deleteByPhone(phoneNumber);
 
         return NextResponse.json({error: 'sending otp failed'}, {status: 502});
     }
-
-    return NextResponse.json({throttled: false, expiresAt: otp.expiresAt});
 }
 
 export async function POST(request) {
