@@ -102,10 +102,13 @@ export class Appointment {
         }
     }
 
-    async delete() {
+    async delete(isDeletedByClient = false) {
         try {
             const response = await fetch(`/api/appointments/${this.id}`, {
                 method: 'DELETE',
+                body: JSON.stringify({
+                    isDeletedByClient
+                }),
             });
 
             if (!response.ok) throw new Error('Failed to delete appointment');
@@ -115,4 +118,4 @@ export class Appointment {
             throw error;
         }
     }
-} 
+}

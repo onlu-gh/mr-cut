@@ -9,6 +9,8 @@ import {format, startOfDay} from "date-fns";
 import {Service} from '@/entities/Service';
 import {getTranslations} from '@/translations';
 import {Barber} from "@/entities/Barber";
+import {isAppointmentWithin30Minutes} from '@/utils';
+// import {MessagingService} from '@/services/messaging.service';
 
 const t = getTranslations(true);
 
@@ -74,12 +76,14 @@ export default function CustomerAppointmentsManagementPage() {
     }, [loadAppointments, router]);
 
     const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this appointment?")) {
+        if (window.confirm("Are you sure you want to cancel this appointment?")) {
             try {
-                await new Appointment({id}).delete();
+                const appointment = new Appointment({id});
+                await appointment.delete(true);
+
                 await loadAppointments();
             } catch (error) {
-                setError("Failed to delete appointment");
+                setError("Failed to cancel appointment");
             }
         }
     };
@@ -276,7 +280,9 @@ export default function CustomerAppointmentsManagementPage() {
                 title=""
                 items={appointments}
                 fields={appointmentFields}
+                canDelete={(appointment) => !isAppointmentWithin30Minutes(appointment)}
                 onDelete={handleDelete}
+                cannotDeleteText={"לא ניתן לבצע ביטול פחות מחצי שעה ממועד התור, נא צרו קשר עם המספרה"}
                 columns={appointmentColumns}
                 getDetails={getAppointmentDetails}
                 initialFormData={initialFormData}

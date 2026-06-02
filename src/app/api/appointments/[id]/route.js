@@ -1,12 +1,15 @@
 import {NextResponse} from 'next/server';
 import {prisma} from '@/lib/prisma';
+import {MessagingService} from '@/services/messaging.service';
+import {Appointment} from '@/entities/Appointment';
+import {isAppointmentWithin30Minutes} from '@/utils';
 
 export async function GET(request, {params}) {
     try {
         const {id} = params;
         const appointment = await prisma.appointment.findUnique({
-                                                                    where: {id}
-                                                                });
+            where: {id}
+        });
 
         if (!appointment) {
             return NextResponse.json({error: 'Appointment not found'}, {status: 404});
@@ -36,8 +39,8 @@ export async function PUT(request, {params}) {
 
         // Check if appointment exists
         const existingAppointment = await prisma.appointment.findUnique({
-                                                                            where: {id}
-                                                                        });
+            where: {id}
+        });
 
         if (!existingAppointment) {
             return NextResponse.json({error: 'Appointment not found'}, {status: 404});
@@ -45,16 +48,16 @@ export async function PUT(request, {params}) {
 
         // Update the appointment
         const appointment = await prisma.appointment.update({
-                                                                where: {id},
-                                                                data: {
-                                                                    client_name,
-                                                                    client_phone_number,
-                                                                    date: new Date(date).toISOString(),
-                                                                    time,
-                                                                    service_id,
-                                                                    barber_id,
-                                                                }
-                                                            });
+            where: {id},
+            data: {
+                client_name,
+                client_phone_number,
+                date: new Date(date).toISOString(),
+                time,
+                service_id,
+                barber_id,
+            }
+        });
 
         console.log('Appointment updated successfully:', appointment);
         return NextResponse.json(appointment);
@@ -64,18 +67,40 @@ export async function PUT(request, {params}) {
             return NextResponse.json({error: 'Appointment not found'}, {status: 404});
         }
         return NextResponse.json({
-                                     error: 'Failed to update appointment',
-                                     details: error.message
-                                 }, {status: 500});
+            error: 'Failed to update appointment',
+            details: error.message
+        }, {status: 500});
     }
 }
 
 export async function DELETE(request, {params}) {
     try {
         const {id} = await params;
+        const {isDeletedByClient} = await request.json();
+        const appointment = new Appointment(await prisma.appointment.findUnique({
+            where: {id},
+            include: {
+                barber: {
+                    select: {
+                        phone_number: true
+                    }
+                }
+            }
+        }));
+
         await prisma.appointment.delete({
-                                            where: {id}
-                                        });
+            where: {id}
+        });
+
+        if (isDeletedByClient && appointment != null) {
+            if (isAppointmentWithin30Minutes(appointment)) {
+                throw new Error('');
+            }
+
+            void MessagingService.sendAppointmentCancellationNotification(appointment).catch(() => (
+                console.error('Error sending cancellation whatsapp notification to barber. appointmentId: ', appointment.id)
+            ));
+        }
 
         return NextResponse.json({success: true});
     } catch (error) {

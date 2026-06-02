@@ -18,6 +18,12 @@ model User {
   barber       Barber?
 }
 
+model Otp {
+  phone_number String   @id
+  code         String
+  generated_at  DateTime @default(now())
+}
+
 model Barber {
   id                   String               @id @default(cuid())
   firstName            String?

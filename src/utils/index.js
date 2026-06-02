@@ -16,4 +16,10 @@ export const createPageUrl = (pageName) => {
  */
 export function cn(...inputs) {
   return inputs.filter(Boolean).join(' ');
-} 
+}
+
+export function isAppointmentWithin30Minutes(appointment) {
+  const diffMs = new Date(`${appointment.date}T${appointment.time}`) - new Date();
+  const diffMinutes = diffMs / (1000 * 60);
+  return diffMinutes <= 30;
+}

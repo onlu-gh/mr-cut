@@ -102,8 +102,12 @@ export async function POST(request) {
         });
         const createdAppointment = new Appointment(appointment);
 
-        void MessagingService.sendAppointmentConfirmation(createdAppointment);
-        void MessagingService.sendAppointmentNotification(createdAppointment);
+        void MessagingService.sendAppointmentConfirmation(createdAppointment).catch(() => (
+            console.error('Error sending whatsapp confirmation to client. appointmentId: ', createdAppointment.id)
+        ));
+        // void MessagingService.sendAppointmentNotification(createdAppointment).catch(() => (
+        //     console.error('Error sending whatsapp notification to barber. appointmentId: ', createdAppointment.id)
+        // ));
 
         return NextResponse.json(appointment, {status: 201});
     } catch (error) {
