@@ -1,14 +1,16 @@
 "use client";
 
-import {useState, useEffect, useCallback, useMemo} from "react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 import {useRouter} from "next/navigation";
 import Cookies from "js-cookie";
 import {Appointment} from "@/entities/Appointment";
 import ManagementSection from "@/components/ManagementSection";
-import {format} from "date-fns";
+import {format, startOfDay} from "date-fns";
 import {Service} from '@/entities/Service';
 import {getTranslations} from '@/translations';
 import {Barber} from "@/entities/Barber";
+import {isAppointmentWithin30Minutes} from '@/utils';
+// import {MessagingService} from '@/services/messaging.service';
 
 const t = getTranslations(true);
 
@@ -33,6 +35,7 @@ export default function CustomerAppointmentsManagementPage() {
         try {
             const appointmentsList = await Appointment.getAllByClientPhoneNumber({
                 clientPhoneNumber: userData.phone_number,
+                startDate: startOfDay(new Date()),
             });
 
             let filteredAppointments = userData.role === "BARBER" ? appointmentsList.filter((a) => a.barberId === userData.id) : appointmentsList;
@@ -73,12 +76,14 @@ export default function CustomerAppointmentsManagementPage() {
     }, [loadAppointments, router]);
 
     const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this appointment?")) {
+        if (window.confirm("Are you sure you want to cancel this appointment?")) {
             try {
-                await new Appointment({id}).delete();
+                const appointment = new Appointment({id});
+                await appointment.delete(true);
+
                 await loadAppointments();
             } catch (error) {
-                setError("Failed to delete appointment");
+                setError("Failed to cancel appointment");
             }
         }
     };
@@ -275,7 +280,9 @@ export default function CustomerAppointmentsManagementPage() {
                 title=""
                 items={appointments}
                 fields={appointmentFields}
+                canDelete={(appointment) => !isAppointmentWithin30Minutes(appointment)}
                 onDelete={handleDelete}
+                cannotDeleteText={"לא ניתן לבצע ביטול פחות מחצי שעה ממועד התור, נא צרו קשר עם המספרה"}
                 columns={appointmentColumns}
                 getDetails={getAppointmentDetails}
                 initialFormData={initialFormData}
