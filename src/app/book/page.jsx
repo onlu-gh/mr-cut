@@ -287,9 +287,6 @@ export default function BookPage() {
                                 <Typography>
                                     <strong>{t.name}:</strong> {name}
                                 </Typography>
-                                <Typography>
-                                    <strong>{t.phone}:</strong> {phone}
-                                </Typography>
                             </Stack>
                         </DialogContent>
                         <DialogActions>

@@ -141,7 +141,8 @@ export default function ClientLayout({children, currentPageName}) {
                 <AppBar position="fixed" sx={{bgcolor: '#2D5043', zIndex: 1200}}>
                     <Toolbar>
                         <Box sx={{flexGrow: 1, display: 'flex', alignItems: 'center'}}>
-                            <Link href={`/${currentUser?.role.toUpperCase() === "CUSTOMER" ? 'home' : 'management'}`} style={{display: 'flex', alignItems: 'center'}}>
+                            <Link href={`/${currentUser?.role.toUpperCase() === "CUSTOMER" ? 'home' : 'management'}`}
+                                  style={{display: 'flex', alignItems: 'center'}}>
                                 <Image
                                     src="/mrcut.png"
                                     alt="Mr. Cut"
@@ -269,14 +270,15 @@ export default function ClientLayout({children, currentPageName}) {
                         </Box>
                         <Box>
                             <Typography variant="subtitle2" sx={{color: '#AFBFAD', textTransform: 'uppercase', mb: 2}}>
-                                {t.followUs}
+                                {"מידע"}
                             </Typography>
                             <Typography variant="body2" sx={{color: 'rgba(255, 255, 255, 0.7)'}}>
-                                Facebook
-                                <br/>
-                                Instagram
-                                <br/>
-                                Twitter
+                                <Link href={"/accessibility"}
+                                      style={{
+                                          textDecoration: 'underline',
+                                      }}>
+                                    {"הצהרת נגישות"}
+                                </Link>
                             </Typography>
                         </Box>
                     </Box>
