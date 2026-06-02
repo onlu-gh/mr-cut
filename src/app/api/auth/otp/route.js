@@ -3,6 +3,7 @@ import {customAlphabet} from 'nanoid';
 import {OtpService} from '@/services/otp.service';
 import {MessagingService} from '@/services/messaging.service';
 import {Config} from '@/lib/config';
+import {prisma} from '@/lib/prisma';
 
 const generateOtp = customAlphabet('0123456789', Config.otpLength);
 
@@ -21,7 +22,6 @@ export async function GET(request) {
     const existing = await OtpService.findByPhone(phoneNumber);
 
     if (existing && !existing.isExpired()) {
-        console.log(existing.expiresAt);
         return NextResponse.json({throttled: true, expiresAt: existing.expiresAt});
     }
 
