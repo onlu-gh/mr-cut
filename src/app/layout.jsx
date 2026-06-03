@@ -11,9 +11,10 @@ export const metadata = {
 export default function RootLayout({children}) {
     return (
         <html lang="en" dir={"rtl"}>
-        <title>Mr. Cut</title>
-        <script src="https://cdn.userway.org/widget.js" data-account="hgkM66vd1F" data-position="5" data-color="#B27333"/>
         <head title={"Mr Cut"}>
+            <title>Mr. Cut</title>
+            <script src="https://cdn.userway.org/widget.js" data-account="hgkM66vd1F" data-position="5"
+                    data-color="#B27333"/>
             <meta name="emotion-insertion-point" content=""/>
         </head>
         <body>
