@@ -4,9 +4,9 @@ import {format} from 'date-fns';
 
 enum MessageTemplate {
    USER_OTP = 'general_verification_code',
-   APPOINTMENT_CONFIRMATION = 'barber_shop_client_appointment_confirmation', // To Client
    //TODO change to final form (remove '_temp') once appointment reminder logic is in place
-   APPOINTMENT_NOTIFICATION = 'barber_shop_client_appointment_confirmation_temp', // To Barber
+   APPOINTMENT_CONFIRMATION = 'barber_shop_client_appointment_confirmation_temp', // To Client
+   APPOINTMENT_NOTIFICATION = 'barber_shop_barber_appointment_notification', // To Barber
    APPOINTMENT_CANCELLATION_NOTIFICATION = 'barber_shop_barber_appointment_cancellation_notification', // To Barber
    APPOINTMENT_REMINDER = 'barber_shop_client_appointment_reminder', // To Client
 }

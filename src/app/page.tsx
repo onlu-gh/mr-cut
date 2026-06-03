@@ -164,7 +164,7 @@ export default function Login() {
          }
 
          if (data) {
-            Cookies.set('userData', JSON.stringify(data.user));
+            Cookies.set('userData', JSON.stringify(data.user), {expires: 30, secure: true, sameSite: 'strict'});
             await login();
          }
       } catch {
