@@ -46,6 +46,12 @@ export default function ClientLayout({children, currentPageName}) {
         try {
             if (userData) {
                 const parsedUserData = JSON.parse(userData);
+                // Validate cookie has required fields — clear stale/corrupted cookies
+                if (!parsedUserData?.id || !parsedUserData?.role) {
+                    console.warn("Invalid cookie structure, clearing session");
+                    handleLogout();
+                    return;
+                }
                 setCurrentUser(parsedUserData);
             }
             // Set language preference from cookie or default to false
@@ -79,8 +85,8 @@ export default function ClientLayout({children, currentPageName}) {
                 {name: t.about, href: "/about"},
             ];
 
-            const isBarber = currentUser?.role.toUpperCase() === "BARBER";
-            const isAdmin = currentUser?.role.toUpperCase() === "ADMIN";
+            const isBarber = currentUser?.role?.toUpperCase() === "BARBER";
+            const isAdmin = currentUser?.role?.toUpperCase() === "ADMIN";
 
             if (isBarber || isAdmin) {
                 tempNavigation = [
@@ -141,7 +147,7 @@ export default function ClientLayout({children, currentPageName}) {
                 <AppBar position="fixed" sx={{bgcolor: '#2D5043', zIndex: 1200}}>
                     <Toolbar>
                         <Box sx={{flexGrow: 1, display: 'flex', alignItems: 'center'}}>
-                            <Link href={`/${currentUser?.role.toUpperCase() === "CUSTOMER" ? 'home' : 'management'}`}
+                            <Link href={`/${currentUser?.role?.toUpperCase() === "CUSTOMER" ? 'home' : 'management'}`}
                                   style={{display: 'flex', alignItems: 'center'}}>
                                 <Image
                                     src="/mrcut.png"
