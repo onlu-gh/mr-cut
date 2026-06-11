@@ -20,7 +20,7 @@ export async function POST() {
         });
 
         if (!user) {
-            NextResponse.json(
+            return NextResponse.json(
                 {message: 'wrong user credentials'},
                 {status: 401}
             );
