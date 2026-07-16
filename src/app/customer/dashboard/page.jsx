@@ -5,12 +5,12 @@ import {useRouter} from "next/navigation";
 import Cookies from "js-cookie";
 import {Appointment} from "@/entities/Appointment";
 import ManagementSection from "@/components/ManagementSection";
+import AddToCalendarButton from "@/components/AddToCalendarButton";
 import {format, startOfDay} from "date-fns";
 import {Service} from '@/entities/Service';
 import {getTranslations} from '@/translations';
 import {Barber} from "@/entities/Barber";
 import {isAppointmentWithin30Minutes} from '@/utils';
-// import {MessagingService} from '@/services/messaging.service';
 
 const t = getTranslations(true);
 
@@ -86,6 +86,41 @@ export default function CustomerAppointmentsManagementPage() {
                 setError("Failed to cancel appointment");
             }
         }
+    };
+
+    const buildCalendarEvent = (appointment) => {
+        const start = new Date(`${appointment.date.split("T")[0]}T${appointment.time}`);
+        const durationMinutes = appointment.service?.duration_minutes || 30;
+        const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
+
+        const barberName = appointment.barber?.firstName
+            ? `${appointment.barber.firstName} ${appointment.barber.lastName}`
+            : "";
+
+        return {
+            title: `${appointment.service?.name ?? t.bookAnAppointment} - Mr. Cut`,
+            description: barberName
+                ? `${appointment.service?.name ?? ""} ${t.calendarEventWith} ${barberName}`.trim()
+                : appointment.service?.name,
+            location: "Mr. Cut",
+            start,
+            end,
+        };
+    };
+
+    const renderAppointmentActions = (appointment) => {
+        if (!appointment.date || !appointment.time) return null;
+
+        return (
+            <AddToCalendarButton
+                event={buildCalendarEvent(appointment)}
+                googleOnlyLabel={t.addToGoogleCalendar}
+                googleLabel={t.googleCalendar}
+                icsLabel={t.appleOutlookCalendar}
+            >
+                {t.addToCalendar}
+            </AddToCalendarButton>
+        );
     };
 
     const getAppointmentDetails = (appointment) => {
@@ -282,10 +317,12 @@ export default function CustomerAppointmentsManagementPage() {
                 fields={appointmentFields}
                 canDelete={(appointment) => !isAppointmentWithin30Minutes(appointment)}
                 onDelete={handleDelete}
+                deleteText={'ביטול תור'}
                 cannotDeleteText={"לא ניתן לבצע ביטול פחות מחצי שעה ממועד התור, נא צרו קשר עם המספרה"}
                 columns={appointmentColumns}
                 getDetails={getAppointmentDetails}
                 initialFormData={initialFormData}
+                renderItemActions={renderAppointmentActions}
                 dialogTitle="תור"
             />
         </div>

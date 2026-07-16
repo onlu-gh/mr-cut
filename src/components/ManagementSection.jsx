@@ -27,12 +27,14 @@ export default function ManagementSection({
                                               onEdit,
                                               canDelete,
                                               onDelete,
+                                              deleteText,
                                               cannotDeleteText,
                                               columns,
                                               getDetails,
                                               initialFormData,
                                               dialogTitle = 'Add New Item',
-                                              customComponents = {}
+                                              customComponents = {},
+                                              renderItemActions
                                           }) {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -91,7 +93,9 @@ export default function ManagementSection({
                             canDelete={canDelete?.(item)}
                             cannotDeleteText={cannotDeleteText}
                             onDelete={() => onDelete(item.id)}
+                            deleteText={deleteText}
                             workingHours={item.workingHours}
+                            actions={renderItemActions?.(item)}
                         />
                     </Grid>
                 ))}
@@ -121,15 +125,25 @@ export default function ManagementSection({
                                 </TableCell>
                             ))}
                             <TableCell align="right">
-                                {!!onEdit &&
-                                    <Button color={'secondary'} onClick={() => handleOpenDialog(item)}>ערוך</Button>}
-                                    <div style={{position:'relative', width:'fit-content'}}>
+                                <Box sx={{display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'flex-end'}}>
+                                    {renderItemActions?.(item)}
+                                    {!!onEdit &&
+                                        <Button color={'secondary'}
+                                                onClick={() => handleOpenDialog(item)}>ערוך</Button>}
+                                    <div style={{position: 'relative', width: 'fit-content'}}>
                                         <Button color={'error'} disabled={!canDelete?.(item)}
                                                 onClick={() => onDelete(item.id)}>מחק</Button>
                                         <Tooltip title={cannotDeleteText} hidden={canDelete?.(item)}>
-                                            <div style={{position:'absolute', top:0, left:0, width: '100%', height: '100%'}}/>
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                width: '100%',
+                                                height: '100%'
+                                            }}/>
                                         </Tooltip>
                                     </div>
+                                </Box>
                             </TableCell>
                         </TableRow>
                     ))}
@@ -178,6 +192,7 @@ export default function ManagementSection({
                 isEditing={editingItem}
                 title={editingItem ? `ערוך ${dialogTitle}` : `הוסף ${dialogTitle}`}
                 formData={formData}
+                deleteText={deleteText}
                 onFormChange={handleFormChange}
                 onSubmit={handleSubmit}
                 fields={fields}
