@@ -6,6 +6,49 @@ export type CalendarEvent = {
     end: Date;
 };
 
+type BuildAppointmentEventParams = {
+    start: Date;
+    durationMinutes?: number;
+    serviceName?: string;
+    barberFirstName?: string;
+    barberLastName?: string;
+    /** Localized "with" connector, e.g. t.calendarEventWith. */
+    withLabel: string;
+    /** Title fallback when the service has no name. */
+    fallbackTitle?: string;
+};
+
+/**
+ * Single source of truth for the Mr. Cut calendar event shape. Both the booking
+ * flow and the customer dashboard feed their appointment data through here so the
+ * title/description formatting stays identical.
+ */
+export function buildAppointmentEvent({
+    start,
+    durationMinutes = 30,
+    serviceName,
+    barberFirstName,
+    barberLastName,
+    withLabel,
+    fallbackTitle,
+}: BuildAppointmentEventParams): CalendarEvent {
+    const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
+
+    const barberName = barberFirstName
+        ? `${barberFirstName} ${barberLastName ?? ""}`.trim()
+        : "";
+
+    return {
+        title: `${serviceName ?? fallbackTitle} - Mr. Cut`,
+        description: barberName
+            ? `${serviceName ?? ""} ${withLabel} ${barberName}`.trim()
+            : serviceName,
+        location: "Mr. Cut",
+        start,
+        end,
+    };
+}
+
 function toICSDate(date: Date): string {
     return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
 }

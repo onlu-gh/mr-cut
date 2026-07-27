@@ -6,6 +6,7 @@ import Cookies from "js-cookie";
 import {Appointment} from "@/entities/Appointment";
 import ManagementSection from "@/components/ManagementSection";
 import AddToCalendarButton from "@/components/AddToCalendarButton";
+import {buildAppointmentEvent} from "@/lib/ics";
 import {format, startOfDay} from "date-fns";
 import {Service} from '@/entities/Service';
 import {getTranslations} from '@/translations';
@@ -88,25 +89,15 @@ export default function CustomerAppointmentsManagementPage() {
         }
     };
 
-    const buildCalendarEvent = (appointment) => {
-        const start = new Date(`${appointment.date.split("T")[0]}T${appointment.time}`);
-        const durationMinutes = appointment.service?.duration_minutes || 30;
-        const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
-
-        const barberName = appointment.barber?.firstName
-            ? `${appointment.barber.firstName} ${appointment.barber.lastName}`
-            : "";
-
-        return {
-            title: `${appointment.service?.name ?? t.bookAnAppointment} - Mr. Cut`,
-            description: barberName
-                ? `${appointment.service?.name ?? ""} ${t.calendarEventWith} ${barberName}`.trim()
-                : appointment.service?.name,
-            location: "Mr. Cut",
-            start,
-            end,
-        };
-    };
+    const buildCalendarEvent = (appointment) => buildAppointmentEvent({
+        start: new Date(`${appointment.date.split("T")[0]}T${appointment.time}`),
+        durationMinutes: appointment.service?.duration_minutes,
+        serviceName: appointment.service?.name,
+        barberFirstName: appointment.barber?.firstName,
+        barberLastName: appointment.barber?.lastName,
+        withLabel: t.calendarEventWith,
+        fallbackTitle: t.bookAnAppointment,
+    });
 
     const renderAppointmentActions = (appointment) => {
         if (!appointment.date || !appointment.time) return null;

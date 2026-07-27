@@ -29,6 +29,7 @@ import {
 } from "@mui/material";
 import AvailableSlotsCard from "@/components/AvailableSlotsCard";
 import AddToCalendarButton from "@/components/AddToCalendarButton";
+import {buildAppointmentEvent} from "@/lib/ics";
 import Cookies from "js-cookie";
 import {getTranslations} from "@/translations";
 import {useRouter} from 'next/navigation';
@@ -191,19 +192,15 @@ export default function BookPage() {
         }
     };
 
-    const buildCalendarEvent = () => {
-        const start = new Date(`${selectedDate}T${selectedTime}:00`);
-        const durationMinutes = selectedService?.duration_minutes ?? 30;
-        const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
-
-        return {
-            title: `${selectedService?.name} - Mr. Cut`,
-            description: `${selectedService?.name} ${t.calendarEventWith} ${selectedBarber?.firstName} ${selectedBarber?.lastName}`,
-            location: "Mr. Cut",
-            start,
-            end,
-        };
-    };
+    const buildCalendarEvent = () => buildAppointmentEvent({
+        start: new Date(`${selectedDate}T${selectedTime}:00`),
+        durationMinutes: selectedService?.duration_minutes,
+        serviceName: selectedService?.name,
+        barberFirstName: selectedBarber?.firstName,
+        barberLastName: selectedBarber?.lastName,
+        withLabel: t.calendarEventWith,
+        fallbackTitle: t.bookAnAppointment,
+    });
 
     const handleCalendarPromptDone = () => {
         setShowCalendarPrompt(false);
