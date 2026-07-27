@@ -114,6 +114,7 @@ export default function CustomerAppointmentsManagementPage() {
         return (
             <AddToCalendarButton
                 event={buildCalendarEvent(appointment)}
+                iconOnly={true}
                 googleOnlyLabel={t.addToGoogleCalendar}
                 googleLabel={t.googleCalendar}
                 icsLabel={t.appleOutlookCalendar}

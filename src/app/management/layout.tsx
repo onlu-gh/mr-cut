@@ -1,19 +1,12 @@
 'use client';
 
-import {useEffect} from 'react';
-import {usePathname, useRouter} from 'next/navigation';
+import React, {useEffect} from 'react';
+import {useRouter} from 'next/navigation';
 import Cookies from 'js-cookie';
 import {Box, Container} from '@mui/material';
-import {getTranslations} from '@/translations';
 
-export default function ManagementLayout({ children }) {
+const ManagementLayout: React.FC<React.PropsWithChildren> = ({children}) => {
   const router = useRouter();
-  const pathname = usePathname();
-  const isHebrew = true;
-  const t = getTranslations(isHebrew);
-
-  // Check if we're in a subfolder of management
-  const isSubFolder = pathname !== '/management';
 
   useEffect(() => {
     const userData = Cookies.get('userData');
@@ -22,7 +15,7 @@ export default function ManagementLayout({ children }) {
       return;
     }
 
-    const { userType } = JSON.parse(userData);
+    const {userType} = JSON.parse(userData) as {userType?: string};
     if (userType !== 'barber' && userType !== 'admin') {
       router.push('/home');
     }
@@ -30,7 +23,7 @@ export default function ManagementLayout({ children }) {
 
   return (
       <Container maxWidth="lg">
-        <Box sx={{ my: 4 }}>
+        <Box sx={{my: 4}}>
           {/*{isSubFolder && (*/}
           {/*  <Button*/}
           {/*    onClick={() => router.push('/management')}*/}
@@ -49,4 +42,6 @@ export default function ManagementLayout({ children }) {
         </Box>
       </Container>
   );
-} 
+};
+
+export default ManagementLayout;

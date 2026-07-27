@@ -34,18 +34,18 @@ export default function AddToCalendarButton({
                                                 onSelect,
                                             }: AddToCalendarButtonProps) {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [isIOS, setIsIOS] = useState(false);
+    const [offerChoice, setOfferChoice] = useState(false);
 
-    // Only iOS gets the .ics: it hands a text/calendar response straight to Calendar.app,
-    // while every other platform would just drop the file into Downloads. Android can't be
-    // given its native calendar at all — Chrome forces CATEGORY_BROWSABLE on intent: URIs
-    // and calendar event editors don't declare it — so Google is the best available there.
-    // Checked after mount (no navigator during SSR). iPadOS 13+ reports itself as
-    // "Macintosh", hence the touch-points check.
+    // Everyone gets the choice dropdown (Google + .ics) except Android. iOS hands a
+    // text/calendar response straight to Calendar.app; desktop (Windows/Mac/Linux)
+    // opens the downloaded .ics in Outlook / Apple Calendar. Android is the only
+    // platform where .ics is useless — Chrome forces CATEGORY_BROWSABLE on intent:
+    // URIs and calendar event editors don't declare it — so Google is best there.
+    // Checked after mount (no navigator during SSR).
     useEffect(() => {
         const ua = navigator.userAgent;
-        const iPadOS = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
-        setIsIOS(/iPhone|iPad|iPod/.test(ua) || iPadOS);
+        const isAndroid = /Android/.test(ua);
+        setOfferChoice(!isAndroid);
     }, []);
 
     const handleSelect = () => {
@@ -53,10 +53,10 @@ export default function AddToCalendarButton({
         onSelect?.();
     };
 
-    // Off iOS there's only one destination, so link straight to it rather than
+    // On Android there's only one destination, so link straight to it rather than
     // making the user open a dropdown to pick from a list of one. The label names
     // that destination outright, since the button no longer leads to a choice.
-    if (!isIOS) {
+    if (!offerChoice) {
         if (iconOnly) {
             return (
                 <Tooltip title={googleOnlyLabel}>

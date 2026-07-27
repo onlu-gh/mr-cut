@@ -45,7 +45,7 @@ export default function ManagementCard({
                     </Box>
                 )}
                 {(onEdit || onDelete || actions) && (
-                    <Box sx={{mt: 2, display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap'}}>
+                    <Box sx={{mt: 2, display: 'flex', gap: 1, alignItems: 'center', justifyContent:'space-between', flexWrap: 'wrap'}}>
                         {actions}
                         {onEdit && (
                             <Button color="secondary" size="small" onClick={onEdit}>
