@@ -26,10 +26,12 @@ export async function GET(request) {
     }
 
     try {
-        const code = generateOtp();
+        const code = Config.devSkipOtp ? Config.devOtpCode : generateOtp();
         const otp = await OtpService.upsert(phoneNumber, code);
 
-        await MessagingService.sendUserOtp({clientPhoneNumber: phoneNumber, code});
+        if (!Config.devSkipOtp) {
+            await MessagingService.sendUserOtp({clientPhoneNumber: phoneNumber, code});
+        }
 
         return NextResponse.json({throttled: false, expiresAt: otp.expiresAt});
     } catch {

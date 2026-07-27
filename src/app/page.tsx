@@ -6,6 +6,7 @@ import Image from 'next/image';
 import {Alert, Box, Button, CircularProgress, Container, MenuItem, Select, TextField, Typography} from '@mui/material';
 import Cookies from 'js-cookie';
 import {Config} from '@/lib/config';
+import {setUserDataCookie} from '@/lib/cookieConsent';
 
 const phoneNumberPrefixes = {
     '050': '50',
@@ -164,11 +165,9 @@ export default function Login() {
             }
 
             if (data) {
-                Cookies.set('userData', JSON.stringify(data.user), {
-                    expires: 30,
-                    secure: false,
-                    sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'strict'
-                });
+                // Essential auth session cookie — exempt from consent.
+                // Embeds the current server cookie version; lives up to the 400-day cap.
+                await setUserDataCookie(data.user);
                 await login();
             }
         } catch {

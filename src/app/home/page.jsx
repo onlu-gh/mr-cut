@@ -7,6 +7,7 @@ import {createPageUrl} from '@/utils';
 import {Box, Button, Card, CardContent, Container, Grid, Stack, Typography} from '@mui/material';
 import {Calendar, Clock, MapPin, Scissors} from 'lucide-react';
 import {getTranslations} from '@/translations';
+import BroadcastDialog from '@/components/BroadcastDialog';
 
 export default function LandingPage() {
     const isHebrew = true;
@@ -15,6 +16,7 @@ export default function LandingPage() {
     return (
         // <ClientLayout currentPageName="Home">
         <Box>
+            <BroadcastDialog/>
             {/* Hero Section */}
             <Box sx={{position: 'relative'}}>
                 <Box sx={{position: 'absolute', inset: 0, zIndex: 0}}>

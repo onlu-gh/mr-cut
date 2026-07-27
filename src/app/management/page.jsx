@@ -75,7 +75,7 @@ export default function ManagementDashboard() {
             <Grid container spacing={3}>
                 {/* Management Cards */}
                 <Grid item xs={12}>
-                    <Grid container spacing={3}>
+                    <Grid container spacing={3} justifyContent="center">
                         {managementCards.map((card) => (
                             <Grid item xs={12} sm={6} md={6} key={card.title}>
                                 <Link href={card.href}

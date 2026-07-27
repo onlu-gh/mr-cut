@@ -13,6 +13,7 @@ import {
     Container,
     Drawer,
     IconButton,
+    Link as MuiLink,
     List,
     ListItem,
     ListItemText,
@@ -24,6 +25,8 @@ import {
 import Cookies from "js-cookie";
 import {usePathname, useRouter} from "next/navigation";
 import {getTranslations} from "@/translations";
+import CookieConsent from "@/components/CookieConsent";
+import {clearConsent, enforceCookieVersions} from "@/lib/cookieConsent";
 
 export default function ClientLayout({children}) {
     const router = useRouter();
@@ -42,6 +45,11 @@ export default function ClientLayout({children}) {
         setNavigating(false);
     }, [path]);
 
+    // Enforce cookie versioning on load: drop stale-versioned cookies and refresh.
+    useEffect(() => {
+        enforceCookieVersions();
+    }, []);
+
     const handleNavClick = (e, href) => {
         // Skip same-page clicks and new-tab clicks (modifier/middle button) — no navigation happens.
         if (href === path || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
@@ -52,7 +60,11 @@ export default function ClientLayout({children}) {
         const userData = Cookies.get("userData");
         // const langPref = Cookies.get("langPref");
 
-        if (!userData && window.location.pathname !== "/") {
+        // Paths reachable without authentication (legal/info pages linked from the
+        // footer and cookie banner). Everything else redirects to "/" when logged out.
+        const PUBLIC_PATHS = ["/", "/accessibility", "/cookie-policy"];
+
+        if (!userData && !PUBLIC_PATHS.includes(window.location.pathname)) {
             handleLogout();
             return;
         }
@@ -84,11 +96,14 @@ export default function ClientLayout({children}) {
 
     const handleLogout = () => {
         Cookies.remove("userData");
+        clearConsent();
         setCurrentUser(null);
         router.push("/");
     };
 
     const t = getTranslations(isHebrew);
+
+    const currentYear = new Date().getFullYear();
 
     useEffect(() => {
         if (currentUser) {
@@ -158,6 +173,7 @@ export default function ClientLayout({children}) {
                 display: 'flex',
                 flexDirection: 'column'
             }}>
+            <CookieConsent/>
             <Backdrop
                 open={navigating}
                 sx={{zIndex: (theme) => theme.zIndex.modal + 1}}
@@ -321,12 +337,51 @@ export default function ClientLayout({children}) {
                                     {"הצהרת נגישות"}
                                 </Link>
                             </Typography>
+                            <Typography variant="body2" sx={{color: 'rgba(255, 255, 255, 0.7)', mt: 1}}>
+                                <Link href={"/cookie-policy"}
+                                      style={{
+                                          textDecoration: 'underline',
+                                      }}>
+                                    {"מדיניות עוגיות"}
+                                </Link>
+                            </Typography>
                         </Box>
                     </Box>
-                    <Box sx={{mt: 4, textAlign: 'center'}}>
-                        <Typography variant="body2" sx={{color: 'rgba(255, 255, 255, 0.7)'}}>
-                            © {new Date().getFullYear()} Mr. Cut. {t.rights}
-                        </Typography>
+                    {/* Tomo-Yo credit strip */}
+                    <Box
+                        dir="ltr"
+                        sx={{
+                            mt: 4,
+                            pt: 3,
+                            borderTop: '1px solid rgba(255, 255, 255, 0.15)',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 1.5,
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            fontSize: '0.875rem',
+                        }}
+                    >
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                            <Image
+                                src="/tomoyo-logo-small-rounded.png"
+                                alt="Tomo-Yo"
+                                width={24}
+                                height={24}
+                                style={{height: '24px', width: '24px'}}
+                            />
+                            © {currentYear} Tomo-Yo.
+                        </Box>
+                        <Box component="span" sx={{color: 'rgba(255, 255, 255, 0.4)'}}>|</Box>
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                            <MuiLink href="tel:052-5370909" sx={{color: 'inherit', textDecoration: 'none', '&:hover': {textDecoration: 'underline'}}}>
+                                052-5370909
+                            </MuiLink>
+                            <MuiLink href="mailto:tomoyo.company@gmail.com" sx={{color: 'inherit', textDecoration: 'none', '&:hover': {textDecoration: 'underline'}}}>
+                                tomoyo.company@gmail.com
+                            </MuiLink>
+                        </Box>
                     </Box>
                 </Container>
             </Box>
