@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {Appointment} from "@/entities/Appointment";
 import {Service} from "@/entities/Service";
 import {Barber} from "@/entities/Barber";
@@ -28,6 +28,8 @@ import {
     Typography,
 } from "@mui/material";
 import AvailableSlotsCard from "@/components/AvailableSlotsCard";
+import AddToCalendarButton from "@/components/AddToCalendarButton";
+import {buildAppointmentEvent} from "@/lib/ics";
 import Cookies from "js-cookie";
 import {getTranslations} from "@/translations";
 import {useRouter} from 'next/navigation';
@@ -47,11 +49,62 @@ export default function BookPage() {
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [showConfirmation, setShowConfirmation] = useState(false);
+    const [showCalendarPrompt, setShowCalendarPrompt] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [snackbar, setSnackbar] = useState({open: false, message: "", severity: "success"});
 
+    const serviceRef = useRef(null);
+    const barberRef = useRef(null);
+    const dateTimeRef = useRef(null);
+    const submitRef = useRef(null);
+
     const isFormFullyFilled = name && phone && selectedDate && selectedBarber && selectedService && selectedDate && selectedTime;
+
+    // the AppBar is fixed at 64px, so scroll targets need to clear it or they land underneath
+    const scrollTargetSx = {scrollMarginTop: '80px'};
+
+    const scrollToSection = (ref) => {
+        // next paint, so the section has rendered its new state before we scroll to it
+        requestAnimationFrame(() => {
+            ref.current?.scrollIntoView({behavior: "smooth", block: "start"});
+        });
+    };
+
+    // Blurring an input on mobile closes the soft keyboard, which resizes the visual
+    // viewport — and any resize cancels a smooth scroll already in flight. The keyboard
+    // slides out over many frames, firing a burst of resize events, so we wait for that
+    // burst to go quiet before scrolling rather than reacting to the first event.
+    const scrollToSectionAfterKeyboard = (ref) => {
+        const viewport = window.visualViewport;
+
+        if (!viewport) {
+            scrollToSection(ref);
+            return;
+        }
+
+        let quietTimer;
+        let done = false;
+
+        const scrollOnce = () => {
+            if (done) return;
+            done = true;
+            clearTimeout(quietTimer);
+            clearTimeout(giveUp);
+            viewport.removeEventListener("resize", onResize);
+            scrollToSection(ref);
+        };
+
+        // each resize pushes the scroll back; it only runs once they stop arriving
+        const onResize = () => {
+            clearTimeout(quietTimer);
+            quietTimer = setTimeout(scrollOnce, 150);
+        };
+
+        // nothing resized at all: desktop, or the keyboard was already dismissed
+        const giveUp = setTimeout(scrollOnce, 800);
+        viewport.addEventListener("resize", onResize);
+    };
 
     useEffect(() => {
         const loadData = async () => {
@@ -123,9 +176,9 @@ export default function BookPage() {
                     message: t.appointmentBookedSuccess,
                     severity: "success",
                 });
-                setTimeout(()=>{
-                    router.push('/customer/dashboard');
-                }, 2000);
+
+                setIsLoading(false);
+                setShowCalendarPrompt(true);
             }
         } catch (error) {
             console.error("Error creating appointment:", error);
@@ -139,12 +192,47 @@ export default function BookPage() {
         }
     };
 
+    const buildCalendarEvent = () => buildAppointmentEvent({
+        start: new Date(`${selectedDate}T${selectedTime}:00`),
+        durationMinutes: selectedService?.duration_minutes,
+        serviceName: selectedService?.name,
+        barberFirstName: selectedBarber?.firstName,
+        barberLastName: selectedBarber?.lastName,
+        withLabel: t.calendarEventWith,
+        fallbackTitle: t.bookAnAppointment,
+    });
+
+    const handleCalendarPromptDone = () => {
+        setShowCalendarPrompt(false);
+        router.push('/customer/dashboard');
+    };
+
+    const handleCalendarSelected = () => {
+        // let the browser start the calendar navigation before we route away,
+        // otherwise the client-side redirect can cancel the .ics request
+        setTimeout(handleCalendarPromptDone, 600);
+    };
+
     const handleServiceSelect = (serviceId) => {
         const service = services.find(s => s.id === serviceId);
         if (service) {
             setSelectedServiceId(serviceId);
             setSelectedService(service);
+            scrollToSection(barberRef);
         }
+    };
+
+    const handleBarberSelect = (barberId) => {
+        const barber = barbers.find(b => b.id === barberId);
+        if (barber) {
+            setSelectedBarber(barber);
+            scrollToSection(dateTimeRef);
+        }
+    };
+
+    const handleSlotSelect = (time) => {
+        setSelectedTime(time);
+        scrollToSection(submitRef);
     };
 
     const formatDate = (dateString) => {
@@ -186,13 +274,14 @@ export default function BookPage() {
                                 label={t.yourName}
                                 value={name}
                                 onChange={(e) => setName(e.target.value ?? "")}
+                                onBlur={() => name && scrollToSectionAfterKeyboard(serviceRef)}
                                 required
                                 sx={{mb: 2}}
                             />
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card ref={serviceRef} sx={scrollTargetSx}>
                         <CardHeader title={t.selectService}/>
                         <CardContent>
                             <FormControl component="fieldset">
@@ -213,14 +302,14 @@ export default function BookPage() {
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card ref={barberRef} sx={scrollTargetSx}>
                         <CardHeader title={t.selectBarber}/>
                         <CardContent>
                             <FormControl component="fieldset">
                                 {
                                     barbers &&
                                     <RadioGroup value={selectedBarber?.id ?? null}
-                                                onChange={(e) => setSelectedBarber(barbers.find(b => b.id === e.target.value))}>
+                                                onChange={(e) => handleBarberSelect(e.target.value)}>
                                         {barbers.map((barber) => (
                                             <FormControlLabel
                                                 key={barber.id}
@@ -235,7 +324,7 @@ export default function BookPage() {
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card ref={dateTimeRef} sx={scrollTargetSx}>
                         <CardHeader title={t.selectDateAndTime}/>
                         <CardContent>
                             <Box
@@ -257,7 +346,7 @@ export default function BookPage() {
                             <AvailableSlotsCard selectedBarber={selectedBarber}
                                                 selectedDate={selectedDate}
                                                 selectedTime={selectedTime}
-                                                onSlotSelect={(time) => setSelectedTime(time)}/>
+                                                onSlotSelect={handleSlotSelect}/>
                         </CardContent>
                     </Card>
 
@@ -307,10 +396,12 @@ export default function BookPage() {
                     </Dialog>
 
                     <Button
+                        ref={submitRef}
                         variant="contained"
                         disabled={!isFormFullyFilled}
                         onClick={handleSubmit}
                         sx={{
+                            ...scrollTargetSx,
                             bgcolor: "#2D5043",
                             "&:hover": {
                                 bgcolor: "#233D34",
@@ -323,10 +414,37 @@ export default function BookPage() {
                 </Stack>
             )}
 
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={6000}
+            <Dialog
+                open={showCalendarPrompt}
+                disableEscapeKeyDown
             >
+                <DialogTitle>{t.appointmentBooked}</DialogTitle>
+                <DialogContent>
+                    <Stack spacing={2} sx={{mt: 1}}>
+                        <Typography>{t.addToCalendarPrompt}</Typography>
+                        <Typography>
+                            <strong>{t.date}:</strong> {formatDate(selectedDate)} {selectedTime}
+                        </Typography>
+                    </Stack>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCalendarPromptDone}>{t.cancel}</Button>
+                    {showCalendarPrompt && (
+                        <AddToCalendarButton
+                            event={buildCalendarEvent()}
+                            googleOnlyLabel={t.addToGoogleCalendar}
+                            googleLabel={t.googleCalendar}
+                            icsLabel={t.appleOutlookCalendar}
+                            onSelect={handleCalendarSelected}
+                        >
+                            {t.addToCalendar}
+                        </AddToCalendarButton>
+                    )}
+                </DialogActions>
+            </Dialog>
+
+            <Snackbar open={snackbar.open}
+                autoHideDuration={6000}>
                 <Alert
                     severity={snackbar.severity}
                     sx={{width: '100%'}}

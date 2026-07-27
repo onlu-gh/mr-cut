@@ -5,12 +5,13 @@ import {useRouter} from "next/navigation";
 import Cookies from "js-cookie";
 import {Appointment} from "@/entities/Appointment";
 import ManagementSection from "@/components/ManagementSection";
+import AddToCalendarButton from "@/components/AddToCalendarButton";
+import {buildAppointmentEvent} from "@/lib/ics";
 import {format, startOfDay} from "date-fns";
 import {Service} from '@/entities/Service';
 import {getTranslations} from '@/translations';
 import {Barber} from "@/entities/Barber";
 import {isAppointmentWithin30Minutes} from '@/utils';
-// import {MessagingService} from '@/services/messaging.service';
 
 const t = getTranslations(true);
 
@@ -86,6 +87,32 @@ export default function CustomerAppointmentsManagementPage() {
                 setError("Failed to cancel appointment");
             }
         }
+    };
+
+    const buildCalendarEvent = (appointment) => buildAppointmentEvent({
+        start: new Date(`${appointment.date.split("T")[0]}T${appointment.time}`),
+        durationMinutes: appointment.service?.duration_minutes,
+        serviceName: appointment.service?.name,
+        barberFirstName: appointment.barber?.firstName,
+        barberLastName: appointment.barber?.lastName,
+        withLabel: t.calendarEventWith,
+        fallbackTitle: t.bookAnAppointment,
+    });
+
+    const renderAppointmentActions = (appointment) => {
+        if (!appointment.date || !appointment.time) return null;
+
+        return (
+            <AddToCalendarButton
+                event={buildCalendarEvent(appointment)}
+                iconOnly={true}
+                googleOnlyLabel={t.addToGoogleCalendar}
+                googleLabel={t.googleCalendar}
+                icsLabel={t.appleOutlookCalendar}
+            >
+                {t.addToCalendar}
+            </AddToCalendarButton>
+        );
     };
 
     const getAppointmentDetails = (appointment) => {
@@ -282,10 +309,12 @@ export default function CustomerAppointmentsManagementPage() {
                 fields={appointmentFields}
                 canDelete={(appointment) => !isAppointmentWithin30Minutes(appointment)}
                 onDelete={handleDelete}
+                deleteText={'ביטול תור'}
                 cannotDeleteText={"לא ניתן לבצע ביטול פחות מחצי שעה ממועד התור, נא צרו קשר עם המספרה"}
                 columns={appointmentColumns}
                 getDetails={getAppointmentDetails}
                 initialFormData={initialFormData}
+                renderItemActions={renderAppointmentActions}
                 dialogTitle="תור"
             />
         </div>

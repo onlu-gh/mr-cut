@@ -29,6 +29,7 @@ export default function ManagementDialog({
                                              formData,
                                              onFormChange,
                                              onDelete,
+                                             deleteText,
                                              onSubmit,
                                              fields,
                                              isMobile = false,
@@ -110,7 +111,7 @@ export default function ManagementDialog({
                                     marginInlineStart: 2,
                                 }}
                                 size={isMobile ? "large" : "medium"}>
-                            מחק
+                            {deleteText ?? 'מחק'}
                         </Button>
                     }
                     <div style={{display: 'flex', gap: 20, marginInlineEnd: 20}}>

@@ -11,9 +11,11 @@ export default function ManagementCard({
                                            href,
                                            details,
                                            onEdit,
+                                           deleteText,
                                            canDelete,
                                            cannotDeleteText,
                                            onDelete,
+                                           actions,
                                        }) {
     const renderCardContent = () => (
             <CardContent sx={{backgroundColor: 'white'}}>
@@ -42,8 +44,9 @@ export default function ManagementCard({
                         ))}
                     </Box>
                 )}
-                {(onEdit || onDelete) && (
-                    <Box sx={{mt: 2, display: 'flex', gap: 1}}>
+                {(onEdit || onDelete || actions) && (
+                    <Box sx={{mt: 2, display: 'flex', gap: 1, alignItems: 'center', justifyContent:'space-between', flexWrap: 'wrap'}}>
+                        {actions}
                         {onEdit && (
                             <Button color="secondary" size="small" onClick={onEdit}>
                                 ערוך
@@ -52,7 +55,7 @@ export default function ManagementCard({
                         {onDelete && (
                             <div style={{position: 'relative', width: 'fit-content'}}>
                                 <Button size="small" disabled={!canDelete} color="error" onClick={onDelete}>
-                                    מחק
+                                    {deleteText ?? 'מחק'}
                                 </Button>
                                 <Tooltip title={cannotDeleteText} hidden={canDelete}>
                                     <div style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%'}}/>
