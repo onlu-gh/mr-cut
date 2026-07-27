@@ -132,6 +132,7 @@ export default function BarbersManagement() {
     return (
         <>
             <ManagementSection
+                showBackButton
                 title={t.barberManagement}
                 items={barbers}
                 fields={barberFields}

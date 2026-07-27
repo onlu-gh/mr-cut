@@ -18,6 +18,7 @@ import {Add} from '@mui/icons-material';
 import ManagementCard from './ManagementCard';
 import ManagementDialog from './ManagementDialog';
 import WorkingHoursEditor from './WorkingHoursEditor';
+import BackToManagementButton from './BackToManagementButton';
 
 export default function ManagementSection({
                                               title,
@@ -34,7 +35,9 @@ export default function ManagementSection({
                                               initialFormData,
                                               dialogTitle = 'Add New Item',
                                               customComponents = {},
-                                              renderItemActions
+                                              renderItemActions,
+                                              headerActions,
+                                              showBackButton = false
                                           }) {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -81,13 +84,17 @@ export default function ManagementSection({
         }
     };
 
+    // Card title comes from the first column that has a mobile-friendly value:
+    // a valueGetter, or a plain field without a custom cell renderer (e.g. toggles).
+    const titleColumn = columns.find(column => column.valueGetter || !column.renderCell) || columns[0];
+
     const renderMobileView = () => (
         <Box sx={{pb: 8}}>
             <Grid container spacing={2}>
                 {items.map((item) => (
                     <Grid item xs={12} key={item.id}>
                         <ManagementCard
-                            title={columns[0].valueGetter ? columns[0].valueGetter({row: item}) : item[columns[0].field]}
+                            title={titleColumn.valueGetter ? titleColumn.valueGetter({row: item}) : item[titleColumn.field]}
                             details={getDetails(item)}
                             onEdit={!!onEdit ? (() => handleOpenDialog(item)) : null}
                             canDelete={canDelete?.(item)}
@@ -95,7 +102,7 @@ export default function ManagementSection({
                             onDelete={() => onDelete(item.id)}
                             deleteText={deleteText}
                             workingHours={item.workingHours}
-                            actions={renderItemActions?.(item)}
+                            actions={renderItemActions?.(item, 'mobile')}
                         />
                     </Grid>
                 ))}
@@ -109,7 +116,7 @@ export default function ManagementSection({
                 <TableHead>
                     <TableRow>
                         {columns.map((column) => (
-                            <TableCell key={column.field} align={column.align || 'left'}>
+                            <TableCell key={column.field} align={column.align || 'left'} sx={column.sx}>
                                 {column.headerName}
                             </TableCell>
                         ))}
@@ -120,13 +127,15 @@ export default function ManagementSection({
                     {items.map((item) => (
                         <TableRow key={item.id}>
                             {columns.map((column) => (
-                                <TableCell key={column.field} align={column.align || 'left'}>
-                                    {column.valueGetter ? column.valueGetter({row: item}) : item[column.field]}
+                                <TableCell key={column.field} align={column.align || 'left'} sx={column.sx}>
+                                    {column.renderCell
+                                        ? column.renderCell(item)
+                                        : column.valueGetter ? column.valueGetter({row: item}) : item[column.field]}
                                 </TableCell>
                             ))}
                             <TableCell align="right">
                                 <Box sx={{display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'flex-end'}}>
-                                    {renderItemActions?.(item)}
+                                    {renderItemActions?.(item, 'desktop')}
                                     {!!onEdit &&
                                         <Button color={'secondary'}
                                                 onClick={() => handleOpenDialog(item)}>ערוך</Button>}
@@ -155,17 +164,23 @@ export default function ManagementSection({
     return (
         <Box>
             <Box sx={{display: 'flex', justifyContent: 'space-between', mb: 3}}>
-                <Typography variant="h4" component="h1">
-                    {title}
-                </Typography>
-                {(!isMobile && !!onAdd) && (
-                    <Button variant="contained"
-                            color={'primary'}
-                            onClick={() => handleOpenDialog()}>
-                        <Add/>
-                        הוסף
-                    </Button>
-                )}
+                <Box sx={{display: 'flex', alignItems: 'center', gap: '5px'}}>
+                    {showBackButton && <BackToManagementButton/>}
+                    <Typography variant="h4" component="h1">
+                        {title}
+                    </Typography>
+                </Box>
+                <Box sx={{display: 'flex', gap: 1, alignItems: 'center'}}>
+                    {headerActions}
+                    {(!isMobile && !!onAdd) && (
+                        <Button variant="contained"
+                                color={'primary'}
+                                onClick={() => handleOpenDialog()}>
+                            <Add/>
+                            הוסף
+                        </Button>
+                    )}
+                </Box>
             </Box>
 
             {isMobile ? renderMobileView() : renderDesktopView()}

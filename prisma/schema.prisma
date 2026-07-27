@@ -76,3 +76,18 @@ model Appointment {
   barber              Barber   @relation(fields: [barber_id], references: [id])
   service             Service  @relation(fields: [service_id], references: [id])
 }
+
+model CookieVersioning{
+  name String @id
+  version Int @default(1)
+  updated_at DateTime @updatedAt
+}
+
+model BroadcastMessage {
+  id         Int      @id @default(autoincrement())
+  content    String
+  active     Boolean  @default(false)
+  order      Int?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}

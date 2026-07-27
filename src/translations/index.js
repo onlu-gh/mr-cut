@@ -18,7 +18,8 @@ export const translations = {
         appointmentManagement: "Appointment Management",
         customerManagement: "Customer Management",
         barberManagement: "Barber Management",
-        backToManagement: "Back to Management",
+        broadcastMessages: "Broadcast Messages",
+        backToManagement: "Back to Main Page",
 
         // Dashboard
         oldSchoolNewStyle: "OLD SCHOOL - NEW STYLE",
@@ -86,7 +87,8 @@ export const translations = {
         appointmentManagement: "ניהול תורים",
         customerManagement: "ניהול לקוחות",
         barberManagement: "ניהול ספרים",
-        backToManagement: "חזרה לניהול",
+        broadcastMessages: "הודעות תפוצה",
+        backToManagement: "חזרה לעמוד הראשי",
 
         // Dashboard
         oldSchoolNewStyle: "סגנון חדש - וייב ישן",

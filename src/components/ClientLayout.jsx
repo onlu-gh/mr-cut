@@ -1,13 +1,15 @@
 "use client";
 
-import React, {useEffect, useState} from "react";
+import React, {Fragment, useEffect, useState} from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {LogOut, Menu, X} from "lucide-react";
 import {
     AppBar,
+    Backdrop,
     Box,
     Button,
+    CircularProgress,
     Container,
     Drawer,
     IconButton,
@@ -23,7 +25,7 @@ import Cookies from "js-cookie";
 import {usePathname, useRouter} from "next/navigation";
 import {getTranslations} from "@/translations";
 
-export default function ClientLayout({children, currentPageName}) {
+export default function ClientLayout({children}) {
     const router = useRouter();
     const path = usePathname();
     const theme = useTheme();
@@ -33,6 +35,18 @@ export default function ClientLayout({children, currentPageName}) {
     const [isHebrew] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
     const [navigation, setNavigation] = useState([]);
+    const [navigating, setNavigating] = useState(false);
+
+    // Layout survives route changes, so the loader must be cleared once the new page is in.
+    useEffect(() => {
+        setNavigating(false);
+    }, [path]);
+
+    const handleNavClick = (e, href) => {
+        // Skip same-page clicks and new-tab clicks (modifier/middle button) — no navigation happens.
+        if (href === path || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        setNavigating(true);
+    };
 
     useEffect(() => {
         const userData = Cookies.get("userData");
@@ -100,6 +114,7 @@ export default function ClientLayout({children, currentPageName}) {
                     tempNavigation = [
                         ...tempNavigation,
                         {name: t.serviceManagement, href: "/management/services"},
+                        {name: t.broadcastMessages, href: "/management/broadcast"},
                     ]
                 }
             }
@@ -143,11 +158,27 @@ export default function ClientLayout({children, currentPageName}) {
                 display: 'flex',
                 flexDirection: 'column'
             }}>
+            <Backdrop
+                open={navigating}
+                sx={{zIndex: (theme) => theme.zIndex.modal + 1}}
+            >
+                <CircularProgress color="inherit"/>
+            </Backdrop>
             {currentUser &&
                 <AppBar position="fixed" sx={{bgcolor: '#2D5043', zIndex: 1200}}>
                     <Toolbar>
-                        <Box sx={{flexGrow: 1, display: 'flex', alignItems: 'center'}}>
+                        <Box sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            // On mobile the logo is centered in the AppBar, leaving the hamburger at the edge
+                            ...(isMobile && {
+                                position: 'absolute',
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                            }),
+                        }}>
                             <Link href={`/${currentUser?.role?.toUpperCase() === "CUSTOMER" ? 'home' : 'management'}`}
+                                  onClick={(e) => handleNavClick(e, `/${currentUser?.role?.toUpperCase() === "CUSTOMER" ? 'home' : 'management'}`)}
                                   style={{display: 'flex', alignItems: 'center'}}>
                                 <Image
                                     src="/mrcut.png"
@@ -161,21 +192,24 @@ export default function ClientLayout({children, currentPageName}) {
                         </Box>
 
                         {!isMobile && (
-                            <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
+                            <Box sx={{marginInlineStart: 5, display: 'flex', flex: 1, alignItems: 'center', gap: 1}}>
                                 {/*<LanguageToggle isHebrew={isHebrew} setIsHebrew={setIsHebrew} />*/}
 
-                                {navigation.map((item) => (
-                                    <Link
-                                        key={item.name}
-                                        href={item.href}
-                                        style={{
-                                            textDecoration: 'none',
-                                            color: currentPageName === item.name ? '#B87333' : 'white',
-                                            '&:hover': {color: '#AFBFAD'}
-                                        }}
-                                    >
-                                        <Typography variant="body1">{item.name}</Typography>
-                                    </Link>
+                                {navigation.map((item, index) => (
+                                    <Fragment key={item.name}>
+                                        <Link href={item.href}
+                                              onClick={(e) => handleNavClick(e, item.href)}
+                                              style={{
+                                                  textDecoration: 'none',
+                                                  // backgroundColor: path === item.href ? 'white' : 'none',
+                                                  padding: '2px 16px',
+                                                  borderRadius: 5,
+                                                  border: path === item.href ? '1px solid #FFFFFF55' : 'none',
+                                              }}>
+                                            <Typography variant="body1">{item.name}</Typography>
+                                        </Link>
+                                        {index < navigation.length - 1 && <span style={{opacity: 0.25}}>|</span>}
+                                    </Fragment>
                                 ))}
 
                                 <Button
@@ -185,6 +219,7 @@ export default function ClientLayout({children, currentPageName}) {
                                         '&:hover': {color: '#AFBFAD'},
                                         display: 'flex',
                                         alignItems: 'center',
+                                        marginInlineStart: 'auto',
                                         gap: 1
                                     }}
                                     startIcon={<LogOut style={{height: '20px', width: '20px'}}/>}
@@ -299,6 +334,9 @@ export default function ClientLayout({children, currentPageName}) {
             {isMobile &&
                 <Drawer
                     anchor="right"
+                    // The rtl theme flips the slide animation to the opposite edge; force it back
+                    // so the drawer slides open from its own (right) edge.
+                    SlideProps={{direction: 'left'}}
                     open={mobileMenuOpen}
                     onClose={() => setMobileMenuOpen(false)}
                     sx={{
@@ -314,9 +352,13 @@ export default function ClientLayout({children, currentPageName}) {
                                 key={item.name}
                                 component={Link}
                                 href={item.href}
-                                onClick={() => setMobileMenuOpen(false)}
+                                onClick={(e) => {
+                                    handleNavClick(e, item.href);
+                                    setMobileMenuOpen(false);
+                                }}
                                 sx={{
-                                    color: currentPageName === item.name ? '#B87333' : 'white',
+                                    color: path === item.href ? '#B87333' : 'white',
+                                    textAlign: 'right',
                                     '&:hover': {
                                         bgcolor: '#233D34',
                                         color: '#AFBFAD',
@@ -332,6 +374,7 @@ export default function ClientLayout({children, currentPageName}) {
                                 setMobileMenuOpen(false);
                             }}
                             sx={{
+                                textAlign: 'right',
                                 color: 'white',
                                 '&:hover': {
                                     bgcolor: '#233D34',
@@ -339,8 +382,8 @@ export default function ClientLayout({children, currentPageName}) {
                                 },
                             }}
                         >
-                            <LogOut style={{height: '20px', width: '20px', marginRight: '8px'}}/>
                             <ListItemText primary={t.logout}/>
+                            <LogOut style={{height: '20px', width: '20px', marginRight: '8px'}}/>
                         </ListItem>
                     </List>
                 </Drawer>

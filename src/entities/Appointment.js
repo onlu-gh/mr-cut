@@ -70,8 +70,6 @@ export class Appointment {
             const method = this.id ? 'PUT' : 'POST';
             const url = this.id ? `/api/appointments/${this.id}` : '/api/appointments';
 
-            const now = new Date().toISOString();
-
             const response = await fetch(url, {
                 method,
                 headers: {
@@ -85,8 +83,6 @@ export class Appointment {
                     service_id: this.serviceId,
                     barber_id: this.barberId,
                     status: 'מאושר',
-                    created_at: now,
-                    updated_at: now,
                 }),
             });
 
