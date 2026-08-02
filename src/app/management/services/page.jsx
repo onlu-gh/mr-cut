@@ -12,7 +12,7 @@ const t = getTranslations(true);
 export default function ServiceManagementPage() {
   const router = useRouter();
   const [services, setServices] = useState([]);
-  const [error, setError] = useState(null);
+  const [, setError] = useState(null);
 
   useEffect(() => {
     const userData = Cookies.get('userData');
@@ -111,6 +111,7 @@ export default function ServiceManagementPage() {
 
   return (
     <ManagementSection
+      showBackButton
       title={t.serviceManagement}
       items={services}
       fields={serviceFields}

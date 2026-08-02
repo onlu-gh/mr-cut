@@ -1,15 +1,17 @@
+import React from 'react';
 import MuiProvider from '@/components/MuiProvider.jsx';
 import ClientLayout from '@/components/ClientLayout.jsx';
 import './globals.css';
 import {Analytics} from '@vercel/analytics/next';
 import Script from 'next/script';
+import type {Metadata} from 'next';
 
-export const metadata = {
+export const metadata: Metadata = {
     title: 'Mr. Cut',
     description: 'Professional barber shop',
 };
 
-export default function RootLayout({children}) {
+const RootLayout: React.FC<React.PropsWithChildren> = ({children}) => {
     return (
         <html lang="en" dir={"rtl"}>
         <head title={"Mr Cut"}>
@@ -28,4 +30,6 @@ export default function RootLayout({children}) {
         </body>
         </html>
     );
-} 
+};
+
+export default RootLayout;

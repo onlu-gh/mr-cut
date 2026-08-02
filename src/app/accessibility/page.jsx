@@ -7,10 +7,12 @@ import {
   Divider,
   Link as MuiLink,
 } from '@mui/material';
+import BackToLoginLink from '@/components/BackToLoginLink';
 
 export default function AccessibilityPage() {
   return (
     <Box sx={{ bgcolor: '#F5F1E6', minHeight: '100vh', py: 8 }} dir="rtl">
+      <BackToLoginLink />
       <Container maxWidth="md">
         {/* Header */}
         <Box sx={{ mb: 5, textAlign: 'center' }}>
@@ -95,12 +97,12 @@ export default function AccessibilityPage() {
             יצירת קשר בנושא נגישות
           </Typography>
           <Typography variant="body1" sx={{ color: '#333', mb: 1, lineHeight: 1.9 }}>
-            גורם אחראי על נגישות: <strong>מר קאט</strong>
+            גורם אחראי על נגישות: <strong>Tomo-Yo</strong>
           </Typography>
           <Typography variant="body1" sx={{ color: '#333', mb: 3, lineHeight: 1.9 }}>
             דוא"ל:{' '}
-            <MuiLink href="mailto:[EMAIL]" sx={{ color: '#2D5043', fontWeight: 600 }}>
-              [EMAIL]
+            <MuiLink href="mailto:tomoyo.company@gmail.com" sx={{ color: '#2D5043', fontWeight: 600 }}>
+              tomoyo.company@gmail.com
             </MuiLink>
           </Typography>
           <Typography variant="body1" sx={{ color: '#555', lineHeight: 1.9 }}>

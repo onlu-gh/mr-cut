@@ -18,7 +18,9 @@ export const translations = {
         appointmentManagement: "Appointment Management",
         customerManagement: "Customer Management",
         barberManagement: "Barber Management",
-        backToManagement: "Back to Management",
+        broadcastMessages: "Broadcast Messages",
+        backToManagement: "Back to Main Page",
+        announcements: "Announcements",
 
         // Dashboard
         oldSchoolNewStyle: "OLD SCHOOL - NEW STYLE",
@@ -56,9 +58,22 @@ export const translations = {
         confirmBooking: "Confirm Booking",
         bookAppointment: "Book Appointment",
         appointmentBookedSuccess: "Appointment booked successfully!",
+        appointmentBooked: "Appointment Booked",
+        addToCalendarPrompt: "Would you like to add this appointment to your calendar?",
+        addToCalendar: "Add to Calendar",
+        googleCalendar: "Google Calendar",
+        addToGoogleCalendar: "Add to Google Calendar",
+        appleOutlookCalendar: "Apple / Outlook",
+        calendarEventWith: "by",
         failedToBook: "Failed to book appointment. Please try again.",
         failedToLoad: "Failed to load services and barbers. Please try again later.",
-        failedToLoadData: "Failed to load data. Please refresh the page."
+        failedToLoadData: "Failed to load data. Please refresh the page.",
+
+        // Cookie consent
+        cookieNotice: "We use cookies to keep you signed in and improve your experience on our site.",
+        cookieLearnMore: "Learn more",
+        cookieAccept: "Accept",
+        cookieReject: "Reject"
     },
     hebrew: {
         // Navigation
@@ -79,7 +94,9 @@ export const translations = {
         appointmentManagement: "ניהול תורים",
         customerManagement: "ניהול לקוחות",
         barberManagement: "ניהול ספרים",
-        backToManagement: "חזרה לניהול",
+        broadcastMessages: "הודעות תפוצה",
+        backToManagement: "חזרה לעמוד הראשי",
+        announcements: "הודעות",
 
         // Dashboard
         oldSchoolNewStyle: "סגנון חדש - וייב ישן",
@@ -117,9 +134,22 @@ export const translations = {
         confirmBooking: "אשר הזמנה",
         bookAppointment: "קביעת תור",
         appointmentBookedSuccess: "התור נקבע בהצלחה!",
+        appointmentBooked: "התור נקבע",
+        addToCalendarPrompt: "להוסיף את התור ליומן שלך?",
+        addToCalendar: "הוסף ליומן",
+        googleCalendar: "יומן Google",
+        addToGoogleCalendar: "הוספה ליומן Google",
+        appleOutlookCalendar: "Apple / Outlook",
+        calendarEventWith: "אצל",
         failedToBook: "משהו נכשל בקביעת התור. אנא נסה שוב.",
         failedToLoad: "משהו נכשל בטעינת הנתונים. אנא נסה שוב מאוחר יותר.",
-        failedToLoadData: "משהו נכשל בטעינת הנתונים. אנא רענן את הדף."
+        failedToLoadData: "משהו נכשל בטעינת הנתונים. אנא רענן את הדף.",
+
+        // Cookie consent
+        cookieNotice: "אנו משתמשים בעוגיות כדי לשמור אותך מחובר ולשפר את חוויית השימוש באתר.",
+        cookieLearnMore: "מידע נוסף",
+        cookieAccept: "אישור",
+        cookieReject: "דחייה"
     }
 };
 

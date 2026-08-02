@@ -5,10 +5,12 @@ import {useRouter} from "next/navigation";
 import Cookies from "js-cookie";
 import {Appointment} from "@/entities/Appointment";
 import ManagementSection from "@/components/ManagementSection";
+import BackToManagementButton from "@/components/BackToManagementButton";
 import {endOfDay, format, startOfDay} from "date-fns";
 import {Service} from '@/entities/Service';
 import {getTranslations} from '@/translations';
 import {Barber} from "@/entities/Barber";
+import {Typography} from '@mui/material';
 
 const t = getTranslations(true);
 
@@ -297,7 +299,12 @@ export default function AppointmentsManagementPage() {
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold">{t.appointmentManagement}</h1>
+                <div className="flex items-center gap-[5px]">
+                    <BackToManagementButton/>
+                    <Typography variant="h4" component="h1">
+                        {t.appointmentManagement}
+                    </Typography>
+                </div>
                 <div className="flex items-center space-x-4">
                     <label htmlFor="date" className="text-sm font-medium text-gray-700">
                         Select Date:

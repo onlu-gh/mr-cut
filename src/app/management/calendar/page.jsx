@@ -20,6 +20,7 @@ import localizeIL from '@/lib/he-IL-localize';
 import {Barber} from '@/entities/Barber';
 import {Appointment} from '@/entities/Appointment';
 import ManagementDialog from '@/components/ManagementDialog';
+import BackToManagementButton from '@/components/BackToManagementButton';
 import {Service} from '@/entities/Service';
 import debounce from 'lodash.debounce';
 import {UniqueWorkingHours} from '@/entities/UniqueWorkingHours';
@@ -423,9 +424,12 @@ export default function CalendarManagement() {
     return (
         <Box>
             <div className="flex justify-between items-center">
-                <Typography variant="h4" component="h1" gutterBottom>
-                    {'לו"ז'}
-                </Typography>
+                <div className="flex items-center gap-[5px]">
+                    <BackToManagementButton/>
+                    <Typography variant="h4" component="h1" gutterBottom>
+                        {'לו"ז'}
+                    </Typography>
+                </div>
                 {
                     barbers &&
                     <div className={"w-[150px]"}>
@@ -561,7 +565,7 @@ export default function CalendarManagement() {
             }
             <Snackbar open={error}
                       onClose={() => setError(null)}
-                      TransitionComponent={(props) => <Slide {...props} direction="down"/>}
+                      TransitionComponent={({children, ...props}) => <Slide {...props} direction="down" children={children}/>}
                       anchorOrigin={{horizontal: 'center', vertical: 'top'}}
                       autoHideDuration={3000}>
                 <Alert severity="error" sx={{mb: 2}}>
