@@ -1,4 +1,4 @@
-import {Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, TextField} from '@mui/material';
+import {Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, TextField, Typography} from '@mui/material';
 import {TimePicker} from '@mui/x-date-pickers';
 import React from 'react';
 import {format, parse} from 'date-fns';
@@ -33,7 +33,8 @@ export default function ManagementDialog({
                                              onSubmit,
                                              fields,
                                              isMobile = false,
-                                             customComponents = {}
+                                             customComponents = {},
+                                             extraActions = null
                                          }) {
     const handleCustomChange = (name, value) => {
         onFormChange({target: {name, value}});
@@ -50,7 +51,7 @@ export default function ManagementDialog({
                 {title}
             </DialogTitle>
             <form onSubmit={onSubmit}>
-                <DialogContent>
+                <DialogContent sx={{paddingBlock: 0}}>
                     <Grid container spacing={2} sx={{mt: 1}}>
                         {fields.map((field) => (
                             <Grid item xs={12} key={field.name}>
@@ -80,19 +81,33 @@ export default function ManagementDialog({
                                         label: field.label,
                                     })
                                 ) : (
-                                    <TextField
-                                        fullWidth
-                                        label={field.label}
-                                        name={field.name}
-                                        type={field.type || 'text'}
-                                        value={formData[field.name]}
-                                        onChange={onFormChange}
-                                        multiline={field.multiline}
-                                        rows={field.rows}
-                                        required={field.required}
-                                        inputProps={field.inputProps}
-                                        size={isMobile ? "medium" : "small"}
-                                    />
+                                    <>
+                                        {field.maxLength && (
+                                            <Typography
+                                                variant="caption"
+                                                color="text.secondary"
+                                                sx={{display: 'block', textAlign: 'end', my: 0}}
+                                            >
+                                                {`${(formData[field.name] ?? '').length}/${field.maxLength}`}
+                                            </Typography>
+                                        )}
+                                        <TextField
+                                            fullWidth
+                                            label={field.label}
+                                            name={field.name}
+                                            type={field.type || 'text'}
+                                            value={formData[field.name]}
+                                            onChange={onFormChange}
+                                            multiline={field.multiline}
+                                            rows={field.rows}
+                                            minRows={field.minRows}
+                                            required={field.required}
+                                            inputProps={field.maxLength
+                                                ? {...field.inputProps, maxLength: field.maxLength}
+                                                : field.inputProps}
+                                            size={isMobile ? "medium" : "small"}
+                                        />
+                                    </>
                                 )}
                             </Grid>
                         ))}
@@ -122,6 +137,7 @@ export default function ManagementDialog({
                         <Button type="submit" variant="contained" size={isMobile ? "large" : "medium"}>
                             {isEditing ? 'עדכן' : 'צור'}
                         </Button>
+                        {extraActions}
                     </div>
                 </DialogActions>
             </form>

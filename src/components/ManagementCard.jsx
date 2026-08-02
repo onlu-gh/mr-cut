@@ -35,7 +35,7 @@ export default function ManagementCard({
                 <Typography variant="body2" color="text.secondary">
                     {description}
                 </Typography>
-                {details && (
+                {details?.length > 0 && (
                     <Box sx={{mt: 2}}>
                         {details.map((detail, index) => (
                             <Typography key={index} variant="body2" color="text.secondary">

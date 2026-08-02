@@ -24,20 +24,6 @@ const ManagementLayout: React.FC<React.PropsWithChildren> = ({children}) => {
   return (
       <Container maxWidth="lg">
         <Box sx={{my: 4}}>
-          {/*{isSubFolder && (*/}
-          {/*  <Button*/}
-          {/*    onClick={() => router.push('/management')}*/}
-          {/*    sx={{*/}
-          {/*      mb: 3,*/}
-          {/*      color: '#2D5043',*/}
-          {/*      '&:hover': {*/}
-          {/*        bgcolor: 'rgba(45, 80, 67, 0.1)',*/}
-          {/*      },*/}
-          {/*    }}>*/}
-          {/*    <ArrowRight />*/}
-          {/*    {t.backToManagement}*/}
-          {/*  </Button>*/}
-          {/*)}*/}
           {children}
         </Box>
       </Container>

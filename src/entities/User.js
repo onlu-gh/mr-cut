@@ -5,8 +5,8 @@ export class User {
     firstName,
     lastName,
     role = 'customer', // 'customer', 'barber', or 'admin'
-    createdAt = new Date(),
-    updatedAt = new Date(),
+    createdAt,
+    updatedAt,
   }) {
     this.id = id;
     this.phone_number = phone_number;

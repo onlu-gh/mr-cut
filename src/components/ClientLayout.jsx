@@ -1,16 +1,19 @@
 "use client";
 
-import React, {useEffect, useState} from "react";
+import React, {Fragment, useEffect, useState} from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {LogOut, Menu, X} from "lucide-react";
 import {
     AppBar,
+    Backdrop,
     Box,
     Button,
+    CircularProgress,
     Container,
     Drawer,
     IconButton,
+    Link as MuiLink,
     List,
     ListItem,
     ListItemText,
@@ -22,8 +25,10 @@ import {
 import Cookies from "js-cookie";
 import {usePathname, useRouter} from "next/navigation";
 import {getTranslations} from "@/translations";
+import CookieConsent from "@/components/CookieConsent";
+import {clearConsent, enforceCookieVersions} from "@/lib/cookieConsent";
 
-export default function ClientLayout({children, currentPageName}) {
+export default function ClientLayout({children}) {
     const router = useRouter();
     const path = usePathname();
     const theme = useTheme();
@@ -33,12 +38,33 @@ export default function ClientLayout({children, currentPageName}) {
     const [isHebrew] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
     const [navigation, setNavigation] = useState([]);
+    const [navigating, setNavigating] = useState(false);
+
+    // Layout survives route changes, so the loader must be cleared once the new page is in.
+    useEffect(() => {
+        setNavigating(false);
+    }, [path]);
+
+    // Enforce cookie versioning on load: drop stale-versioned cookies and refresh.
+    useEffect(() => {
+        enforceCookieVersions();
+    }, []);
+
+    const handleNavClick = (e, href) => {
+        // Skip same-page clicks and new-tab clicks (modifier/middle button) — no navigation happens.
+        if (href === path || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        setNavigating(true);
+    };
 
     useEffect(() => {
         const userData = Cookies.get("userData");
         // const langPref = Cookies.get("langPref");
 
-        if (!userData && window.location.pathname !== "/") {
+        // Paths reachable without authentication (legal/info pages linked from the
+        // footer and cookie banner). Everything else redirects to "/" when logged out.
+        const PUBLIC_PATHS = ["/", "/accessibility", "/cookie-policy"];
+
+        if (!userData && !PUBLIC_PATHS.includes(window.location.pathname)) {
             handleLogout();
             return;
         }
@@ -70,11 +96,14 @@ export default function ClientLayout({children, currentPageName}) {
 
     const handleLogout = () => {
         Cookies.remove("userData");
+        clearConsent();
         setCurrentUser(null);
         router.push("/");
     };
 
     const t = getTranslations(isHebrew);
+
+    const currentYear = new Date().getFullYear();
 
     useEffect(() => {
         if (currentUser) {
@@ -100,6 +129,7 @@ export default function ClientLayout({children, currentPageName}) {
                     tempNavigation = [
                         ...tempNavigation,
                         {name: t.serviceManagement, href: "/management/services"},
+                        {name: t.broadcastMessages, href: "/management/broadcast"},
                     ]
                 }
             }
@@ -143,11 +173,28 @@ export default function ClientLayout({children, currentPageName}) {
                 display: 'flex',
                 flexDirection: 'column'
             }}>
+            <CookieConsent/>
+            <Backdrop
+                open={navigating}
+                sx={{zIndex: (theme) => theme.zIndex.modal + 1}}
+            >
+                <CircularProgress color="inherit"/>
+            </Backdrop>
             {currentUser &&
                 <AppBar position="fixed" sx={{bgcolor: '#2D5043', zIndex: 1200}}>
                     <Toolbar>
-                        <Box sx={{flexGrow: 1, display: 'flex', alignItems: 'center'}}>
+                        <Box sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            // On mobile the logo is centered in the AppBar, leaving the hamburger at the edge
+                            ...(isMobile && {
+                                position: 'absolute',
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                            }),
+                        }}>
                             <Link href={`/${currentUser?.role?.toUpperCase() === "CUSTOMER" ? 'home' : 'management'}`}
+                                  onClick={(e) => handleNavClick(e, `/${currentUser?.role?.toUpperCase() === "CUSTOMER" ? 'home' : 'management'}`)}
                                   style={{display: 'flex', alignItems: 'center'}}>
                                 <Image
                                     src="/mrcut.png"
@@ -161,21 +208,24 @@ export default function ClientLayout({children, currentPageName}) {
                         </Box>
 
                         {!isMobile && (
-                            <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
+                            <Box sx={{marginInlineStart: 5, display: 'flex', flex: 1, alignItems: 'center', gap: 1}}>
                                 {/*<LanguageToggle isHebrew={isHebrew} setIsHebrew={setIsHebrew} />*/}
 
-                                {navigation.map((item) => (
-                                    <Link
-                                        key={item.name}
-                                        href={item.href}
-                                        style={{
-                                            textDecoration: 'none',
-                                            color: currentPageName === item.name ? '#B87333' : 'white',
-                                            '&:hover': {color: '#AFBFAD'}
-                                        }}
-                                    >
-                                        <Typography variant="body1">{item.name}</Typography>
-                                    </Link>
+                                {navigation.map((item, index) => (
+                                    <Fragment key={item.name}>
+                                        <Link href={item.href}
+                                              onClick={(e) => handleNavClick(e, item.href)}
+                                              style={{
+                                                  textDecoration: 'none',
+                                                  // backgroundColor: path === item.href ? 'white' : 'none',
+                                                  padding: '2px 16px',
+                                                  borderRadius: 5,
+                                                  border: path === item.href ? '1px solid #FFFFFF55' : 'none',
+                                              }}>
+                                            <Typography variant="body1">{item.name}</Typography>
+                                        </Link>
+                                        {index < navigation.length - 1 && <span style={{opacity: 0.25}}>|</span>}
+                                    </Fragment>
                                 ))}
 
                                 <Button
@@ -185,6 +235,7 @@ export default function ClientLayout({children, currentPageName}) {
                                         '&:hover': {color: '#AFBFAD'},
                                         display: 'flex',
                                         alignItems: 'center',
+                                        marginInlineStart: 'auto',
                                         gap: 1
                                     }}
                                     startIcon={<LogOut style={{height: '20px', width: '20px'}}/>}
@@ -286,12 +337,51 @@ export default function ClientLayout({children, currentPageName}) {
                                     {"הצהרת נגישות"}
                                 </Link>
                             </Typography>
+                            <Typography variant="body2" sx={{color: 'rgba(255, 255, 255, 0.7)', mt: 1}}>
+                                <Link href={"/cookie-policy"}
+                                      style={{
+                                          textDecoration: 'underline',
+                                      }}>
+                                    {"מדיניות עוגיות"}
+                                </Link>
+                            </Typography>
                         </Box>
                     </Box>
-                    <Box sx={{mt: 4, textAlign: 'center'}}>
-                        <Typography variant="body2" sx={{color: 'rgba(255, 255, 255, 0.7)'}}>
-                            © {new Date().getFullYear()} Mr. Cut. {t.rights}
-                        </Typography>
+                    {/* Tomo-Yo credit strip */}
+                    <Box
+                        dir="ltr"
+                        sx={{
+                            mt: 4,
+                            pt: 3,
+                            borderTop: '1px solid rgba(255, 255, 255, 0.15)',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 1.5,
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            fontSize: '0.875rem',
+                        }}
+                    >
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                            <Image
+                                src="/tomoyo-logo-small-rounded.png"
+                                alt="Tomo-Yo"
+                                width={24}
+                                height={24}
+                                style={{height: '24px', width: '24px'}}
+                            />
+                            © {currentYear} Tomo-Yo.
+                        </Box>
+                        <Box component="span" sx={{color: 'rgba(255, 255, 255, 0.4)'}}>|</Box>
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                            <MuiLink href="tel:052-5370909" sx={{color: 'inherit', textDecoration: 'none', '&:hover': {textDecoration: 'underline'}}}>
+                                052-5370909
+                            </MuiLink>
+                            <MuiLink href="mailto:tomoyo.company@gmail.com" sx={{color: 'inherit', textDecoration: 'none', '&:hover': {textDecoration: 'underline'}}}>
+                                tomoyo.company@gmail.com
+                            </MuiLink>
+                        </Box>
                     </Box>
                 </Container>
             </Box>
@@ -299,6 +389,9 @@ export default function ClientLayout({children, currentPageName}) {
             {isMobile &&
                 <Drawer
                     anchor="right"
+                    // The rtl theme flips the slide animation to the opposite edge; force it back
+                    // so the drawer slides open from its own (right) edge.
+                    SlideProps={{direction: 'left'}}
                     open={mobileMenuOpen}
                     onClose={() => setMobileMenuOpen(false)}
                     sx={{
@@ -314,9 +407,13 @@ export default function ClientLayout({children, currentPageName}) {
                                 key={item.name}
                                 component={Link}
                                 href={item.href}
-                                onClick={() => setMobileMenuOpen(false)}
+                                onClick={(e) => {
+                                    handleNavClick(e, item.href);
+                                    setMobileMenuOpen(false);
+                                }}
                                 sx={{
-                                    color: currentPageName === item.name ? '#B87333' : 'white',
+                                    color: path === item.href ? '#B87333' : 'white',
+                                    textAlign: 'right',
                                     '&:hover': {
                                         bgcolor: '#233D34',
                                         color: '#AFBFAD',
@@ -332,6 +429,7 @@ export default function ClientLayout({children, currentPageName}) {
                                 setMobileMenuOpen(false);
                             }}
                             sx={{
+                                textAlign: 'right',
                                 color: 'white',
                                 '&:hover': {
                                     bgcolor: '#233D34',
@@ -339,8 +437,8 @@ export default function ClientLayout({children, currentPageName}) {
                                 },
                             }}
                         >
-                            <LogOut style={{height: '20px', width: '20px', marginRight: '8px'}}/>
                             <ListItemText primary={t.logout}/>
+                            <LogOut style={{height: '20px', width: '20px', marginRight: '8px'}}/>
                         </ListItem>
                     </List>
                 </Drawer>

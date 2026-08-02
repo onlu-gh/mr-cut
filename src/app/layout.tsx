@@ -23,7 +23,7 @@ const RootLayout: React.FC<React.PropsWithChildren> = ({children}) => {
         <body>
         <MuiProvider>
             <Analytics/>
-            <ClientLayout currentPageName={'index'}>
+            <ClientLayout>
                 {children}
             </ClientLayout>
         </MuiProvider>
