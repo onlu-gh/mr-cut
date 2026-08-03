@@ -71,41 +71,6 @@ export default function BookPage() {
         });
     };
 
-    // Blurring an input on mobile closes the soft keyboard, which resizes the visual
-    // viewport — and any resize cancels a smooth scroll already in flight. The keyboard
-    // slides out over many frames, firing a burst of resize events, so we wait for that
-    // burst to go quiet before scrolling rather than reacting to the first event.
-    const scrollToSectionAfterKeyboard = (ref) => {
-        const viewport = window.visualViewport;
-
-        if (!viewport) {
-            scrollToSection(ref);
-            return;
-        }
-
-        let quietTimer;
-        let done = false;
-
-        const scrollOnce = () => {
-            if (done) return;
-            done = true;
-            clearTimeout(quietTimer);
-            clearTimeout(giveUp);
-            viewport.removeEventListener("resize", onResize);
-            scrollToSection(ref);
-        };
-
-        // each resize pushes the scroll back; it only runs once they stop arriving
-        const onResize = () => {
-            clearTimeout(quietTimer);
-            quietTimer = setTimeout(scrollOnce, 150);
-        };
-
-        // nothing resized at all: desktop, or the keyboard was already dismissed
-        const giveUp = setTimeout(scrollOnce, 800);
-        viewport.addEventListener("resize", onResize);
-    };
-
     useEffect(() => {
         const loadData = async () => {
             setIsLoading(true);
@@ -274,7 +239,6 @@ export default function BookPage() {
                                 label={t.yourName}
                                 value={name}
                                 onChange={(e) => setName(e.target.value ?? "")}
-                                onBlur={() => name && scrollToSectionAfterKeyboard(serviceRef)}
                                 required
                                 sx={{mb: 2}}
                             />
