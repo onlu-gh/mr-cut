@@ -26,7 +26,7 @@ export default function ManagementSection({
                                               fields,
                                               onAdd,
                                               onEdit,
-                                              canDelete,
+                                              preventDelete,
                                               onDelete,
                                               deleteText,
                                               cannotDeleteText,
@@ -97,7 +97,7 @@ export default function ManagementSection({
                             title={titleColumn.valueGetter ? titleColumn.valueGetter({row: item}) : item[titleColumn.field]}
                             details={getDetails(item)}
                             onEdit={!!onEdit ? (() => handleOpenDialog(item)) : null}
-                            canDelete={canDelete?.(item)}
+                            preventDelete={preventDelete?.(item)}
                             cannotDeleteText={cannotDeleteText}
                             onDelete={() => onDelete(item.id)}
                             deleteText={deleteText}
@@ -140,9 +140,9 @@ export default function ManagementSection({
                                         <Button color={'secondary'}
                                                 onClick={() => handleOpenDialog(item)}>ערוך</Button>}
                                     <div style={{position: 'relative', width: 'fit-content'}}>
-                                        <Button color={'error'} disabled={!canDelete?.(item)}
-                                                onClick={() => onDelete(item.id)}>מחק</Button>
-                                        <Tooltip title={cannotDeleteText} hidden={canDelete?.(item)}>
+                                        <Button color={'error'} disabled={preventDelete?.(item)}
+                                                onClick={() => onDelete(item.id)}>{deleteText ?? 'מחק'}</Button>
+                                        <Tooltip title={cannotDeleteText} hidden={!preventDelete?.(item)}>
                                             <div style={{
                                                 position: 'absolute',
                                                 top: 0,

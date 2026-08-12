@@ -2,6 +2,7 @@ import {Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, TextFie
 import {TimePicker} from '@mui/x-date-pickers';
 import React from 'react';
 import {format, parse} from 'date-fns';
+import PhoneNumberField from './PhoneNumberField';
 
 const COMMON_CUSTOM_COMPONENTS = {
     time: ({value, onChange, label}) => (
@@ -18,6 +19,14 @@ const COMMON_CUSTOM_COMPONENTS = {
     ),
     text: ({value}) => (
         <span>{value}</span>
+    ),
+    phone: ({value, onChange, isMobile, label}) => (
+        <PhoneNumberField
+            value={value}
+            onChange={onChange}
+            isMobile={isMobile}
+            label={label}
+        />
     ),
 }
 
@@ -68,7 +77,8 @@ export default function ManagementDialog({
                                         }}
                                         size={isMobile ? "medium" : "small"}>
                                         {field.options?.map((option) => (
-                                            <option key={option.value} value={option.value}>
+                                            <option key={option.value} value={option.value}
+                                                    disabled={option.disabled} hidden={option.hidden}>
                                                 {option.label}
                                             </option>
                                         ))}

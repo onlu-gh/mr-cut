@@ -12,7 +12,7 @@ export default function ManagementCard({
                                            details,
                                            onEdit,
                                            deleteText,
-                                           canDelete,
+                                           preventDelete,
                                            cannotDeleteText,
                                            onDelete,
                                            actions,
@@ -54,10 +54,10 @@ export default function ManagementCard({
                         )}
                         {onDelete && (
                             <div style={{position: 'relative', width: 'fit-content'}}>
-                                <Button size="small" disabled={!canDelete} color="error" onClick={onDelete}>
+                                <Button size="small" disabled={preventDelete} color="error" onClick={onDelete}>
                                     {deleteText ?? 'מחק'}
                                 </Button>
-                                <Tooltip title={cannotDeleteText} hidden={canDelete}>
+                                <Tooltip title={cannotDeleteText} hidden={!preventDelete}>
                                     <div style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%'}}/>
                                 </Tooltip>
                             </div>
