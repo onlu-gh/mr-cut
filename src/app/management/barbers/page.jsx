@@ -6,10 +6,13 @@ import ManagementSection from '@/components/ManagementSection';
 import {getTranslations} from '@/translations';
 import {Alert, Snackbar} from '@mui/material';
 import Cookies from 'js-cookie';
+import {formatPhoneNumberForDisplay} from '@/components/PhoneNumberField';
+import useConfirm from '@/components/useConfirm';
 
 const t = getTranslations(true);
 
 export default function BarbersManagement() {
+    const [confirm, ConfirmDialog] = useConfirm();
     const [barbers, setBarbers] = useState([]);
     const [snackbar, setSnackbar] = useState({open: false, message: "", severity: "success"});
 
@@ -65,24 +68,29 @@ export default function BarbersManagement() {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this barber?')) {
-            try {
-                const barber = new Barber({id});
-                await barber.delete();
-                await loadBarbers();
-            } catch (error) {
-                setSnackbar({
-                    open: true,
-                    message: 'Failed to delete barber',
-                    severity: "error"
-                });
-            }
-        }
+        confirm({
+            message: 'אתם בטוחים שברצונכם למחוק את הספר?',
+            successMessage: 'הספר נמחק בהצלחה',
+            onConfirm: async () => {
+                try {
+                    const barber = new Barber({id});
+                    await barber.delete();
+                    await loadBarbers();
+                } catch (error) {
+                    setSnackbar({
+                        open: true,
+                        message: 'Failed to delete barber',
+                        severity: "error"
+                    });
+                    throw error;
+                }
+            },
+        });
     };
 
     const getBarberDetails = (barber) => [
         {label: 'שם מלא', value: `${barber.firstName} ${barber.lastName}`},
-        {label: 'טלפון', value: barber.phoneNumber},
+        {label: 'טלפון', value: formatPhoneNumberForDisplay(barber.phoneNumber)},
     ];
 
     const barberFields = [
@@ -111,7 +119,12 @@ export default function BarbersManagement() {
     const barberColumns = [
         {field: 'firstName', headerName: 'שם פרטי', align: 'right'},
         {field: 'lastName', headerName: 'שם משפחה', align: 'right'},
-        {field: 'phoneNumber', headerName: 'טלפון', align: 'right'},
+        {
+            field: 'phoneNumber',
+            headerName: 'טלפון',
+            align: 'right',
+            valueGetter: (params) => formatPhoneNumberForDisplay(params.row.phoneNumber),
+        },
     ];
 
     const initialFormData = {
@@ -154,6 +167,7 @@ export default function BarbersManagement() {
                     {snackbar.message}
                 </Alert>
             </Snackbar>
+            {ConfirmDialog}
         </>
     );
 }

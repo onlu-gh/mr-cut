@@ -24,6 +24,8 @@ import BackToManagementButton from '@/components/BackToManagementButton';
 import {Service} from '@/entities/Service';
 import debounce from 'lodash.debounce';
 import {UniqueWorkingHours} from '@/entities/UniqueWorkingHours';
+import useConfirm from '@/components/useConfirm';
+import {Config} from '@/lib/config';
 
 function getEndOfWeek(startOfTheWeek) {
     return addDays(endOfWeek(startOfTheWeek, {weekStartsOn: 0}), -1);
@@ -34,6 +36,7 @@ const WEEK_DAYS_IN_ORDER = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursda
 export default function CalendarManagement() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const [confirm, ConfirmDialog] = useConfirm();
 
     const [appointments, setAppointments] = useState([]);
     const [uniqueWorkingHours, setUniqueWorkingHours] = useState({});
@@ -88,6 +91,7 @@ export default function CalendarManagement() {
             name: "clientPhoneNumber",
             label: "טלפון",
             required: true,
+            customComponent: 'phone',
         },
         {
             name: "date",
@@ -116,8 +120,12 @@ export default function CalendarManagement() {
             label: "שירות",
             type: "select",
             required: true,
-            options: services?.map((service) => ({value: service.id, label: service.name})), // This should be populated
-            // with available services
+            options: [
+                ...(services?.filter((service) => !service.suspended).map((service) => ({value: service.id, label: service.name})) ?? []),
+                // Non-selectable, hidden from the list; only shows as the current
+                // value when editing an appointment whose service was deleted.
+                {value: Config.removedServiceId, label: 'שירות שהוסר', disabled: true, hidden: true},
+            ],
         },
     ];
 
@@ -147,7 +155,7 @@ export default function CalendarManagement() {
         clientPhoneNumber: '',
         date: '',
         time: "",
-        serviceId: services?.[0]?.id,
+        serviceId: services?.find((service) => !service.suspended)?.id,
         barberId: barbers?.[0]?.id,
     };
 
@@ -358,16 +366,21 @@ export default function CalendarManagement() {
     };
 
     const handleDeleteAppointment = async (id) => {
-        if (window.confirm("אתם בטוחים שברצונכם למחוק את התור?")) {
-            try {
-                await new Appointment({id}).delete();
-            } catch (error) {
-                setError("Failed to delete appointment");
-            } finally {
-                loadWeeklyAppointments(startOfTheWeek);
-            }
-            handleCloseDialog();
-        }
+        confirm({
+            message: "אתם בטוחים שברצונכם לבטל את התור?",
+            successMessage: "התור בוטל בהצלחה",
+            onConfirm: async () => {
+                try {
+                    await new Appointment({id}).delete();
+                } catch (error) {
+                    setError("Failed to delete appointment");
+                    throw error;
+                } finally {
+                    loadWeeklyAppointments(startOfTheWeek);
+                }
+                handleCloseDialog();
+            },
+        });
     };
 
     const handleEditDailySchedule = async (_, formData) => {
@@ -500,7 +513,7 @@ export default function CalendarManagement() {
                                   id,
                                   title: `${time}\n${clientName}`,
                                   startDate,
-                                  endDate: addMinutes(startDate, service.duration_minutes),
+                                  endDate: addMinutes(startDate, Math.max(service.duration_minutes, 0)),
                               };
                           })
                       }
@@ -558,6 +571,7 @@ export default function CalendarManagement() {
                     formData={formData}
                     onFormChange={handleFormChange}
                     onDelete={dataDialog.handleDelete && (() => dataDialog.handleDelete(editingItem.id))}
+                    deleteText="ביטול תור"
                     onSubmit={handleSubmit}
                     fields={dataDialog.fields}
                     isMobile={isMobile}
@@ -572,6 +586,7 @@ export default function CalendarManagement() {
                     {'הפעולה נכשלה'}
                 </Alert>
             </Snackbar>
+            {ConfirmDialog}
         </Box>
     );
 }

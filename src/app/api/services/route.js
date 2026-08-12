@@ -1,10 +1,35 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Config } from '@/lib/config';
 
 export async function GET() {
   try {
-    const services = await prisma.service.findMany();
-    return NextResponse.json(services);
+    // Placeholder row is internal-only: never listed, booked, or selected.
+    const services = await prisma.service.findMany({
+      where: { id: { not: Config.removedServiceId } },
+    });
+
+    // Flag services that have upcoming appointments (today onward); those can't
+    // be deleted (the barber must suspend them instead).
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const futureGroups = await prisma.appointment.groupBy({
+      by: ['service_id'],
+      where: { date: { gte: startOfToday } },
+      _count: { _all: true },
+    });
+
+    const futureByService = new Map(
+      futureGroups.map((group) => [group.service_id, group._count._all])
+    );
+
+    const withFlags = services.map((service) => ({
+      ...service,
+      hasFutureAppointments: (futureByService.get(service.id) ?? 0) > 0,
+    }));
+
+    return NextResponse.json(withFlags);
   } catch (error) {
     console.error('Error fetching services:', error);
     return NextResponse.json({ error: 'Failed to fetch services' }, { status: 500 });
@@ -28,8 +53,7 @@ export async function POST(request) {
       data: {
         name,
         duration_minutes,
-        price,
-        description:"null",
+        price
       }
     });
 

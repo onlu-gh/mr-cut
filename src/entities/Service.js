@@ -3,8 +3,10 @@ export class Service {
     this.id = data.id;
     this.name = data.name;
     this.description = data.description;
-    this.price = parseInt(data.price);
+    this.price = parseFloat(data.price);
     this.duration_minutes = parseInt(data.duration_minutes); // in minutes
+    this.suspended = data.suspended ?? false;
+    this.hasFutureAppointments = data.hasFutureAppointments ?? false;
   }
 
   static async getAll() {
@@ -45,7 +47,8 @@ export class Service {
       const requestBody = {
         name: this.name,
         price: this.price,
-        duration_minutes: this.duration_minutes
+        duration_minutes: this.duration_minutes,
+        suspended: this.suspended
       };
 
       console.log('Sending request:', { method, url, body: requestBody });

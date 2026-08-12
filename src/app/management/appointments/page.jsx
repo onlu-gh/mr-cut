@@ -11,11 +11,18 @@ import {Service} from '@/entities/Service';
 import {getTranslations} from '@/translations';
 import {Barber} from "@/entities/Barber";
 import {Typography} from '@mui/material';
+import {formatPhoneNumberForDisplay} from '@/components/PhoneNumberField';
+import useConfirm from '@/components/useConfirm';
+import {Config} from '@/lib/config';
 
 const t = getTranslations(true);
 
+const UNKNOWN_INFO_PLACEHOLDER = "לא ידוע";
+const DELETED_SERVICE_DATA_PLACEHOLDER = "-";
+
 export default function AppointmentsManagementPage() {
     const router = useRouter();
+    const [confirm, ConfirmDialog] = useConfirm();
     const [appointments, setAppointments] = useState([]);
     const [services, setServices] = useState([]);
     const [barbers, setBarbers] = useState([]);
@@ -114,14 +121,19 @@ export default function AppointmentsManagementPage() {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm("אתם בטוחים שברצונכם למחוק את התור?")) {
-            try {
-                await new Appointment({id}).delete();
-                await loadAppointments();
-            } catch (error) {
-                setError("Failed to delete appointment");
-            }
-        }
+        confirm({
+            message: "אתם בטוחים שברצונכם לבטל את התור?",
+            successMessage: "התור בוטל בהצלחה",
+            onConfirm: async () => {
+                try {
+                    await new Appointment({id}).delete();
+                    await loadAppointments();
+                } catch (error) {
+                    setError("Failed to delete appointment");
+                    throw error;
+                }
+            },
+        });
     };
 
     const getAppointmentDetails = (appointment) => {
@@ -139,35 +151,35 @@ export default function AppointmentsManagementPage() {
             },
             {
                 label: "טלפון לקוח",
-                value: appointment.clientPhoneNumber,
+                value: formatPhoneNumberForDisplay(appointment.clientPhoneNumber),
             },
             {
                 label: "ספר",
                 value: appointment.barber?.firstName
                     ? `${appointment.barber.firstName} ${appointment.barber.lastName}`
-                    : "לא ידוע",
+                    : UNKNOWN_INFO_PLACEHOLDER,
             },
             {
                 label: "שירות",
-                value: appointment.service?.name || "לא ידוע",
+                value: appointment.service?.name || UNKNOWN_INFO_PLACEHOLDER,
             },
             {
                 label: "זמן",
-                value: appointment.service?.duration_minutes
+                value: appointment.service?.duration_minutes >= 0
                     ? `${appointment.service.duration_minutes} דקות `
-                    : "לא ידוע",
+                    : DELETED_SERVICE_DATA_PLACEHOLDER,
             },
             {
                 label: "מחיר",
-                value: appointment.service?.price
+                value: appointment.service?.price >= 0
                     ? `₪${appointment.service.price}`
-                    : "לא ידוע",
+                    : DELETED_SERVICE_DATA_PLACEHOLDER,
             },
             {
                 label: "סטטוס",
                 value: appointment.status
                     ? appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)
-                    : "לא ידוע",
+                    : UNKNOWN_INFO_PLACEHOLDER,
             }
         ];
     };
@@ -182,6 +194,7 @@ export default function AppointmentsManagementPage() {
             name: "clientPhoneNumber",
             label: "טלפון",
             required: true,
+            customComponent: 'phone',
         },
         {
             name: "date",
@@ -210,8 +223,12 @@ export default function AppointmentsManagementPage() {
             label: "שירות",
             type: "select",
             required: true,
-            options: services?.map((service) => ({value: service.id, label: service.name})), // This should be populated
-            // with available services
+            options: [
+                ...(services?.filter((service) => !service.suspended).map((service) => ({value: service.id, label: service.name})) ?? []),
+                // Non-selectable, hidden from the list; only shows as the current
+                // value when editing an appointment whose service was deleted.
+                {value: Config.removedServiceId, label: 'שירות שהוסר', disabled: true, hidden: true},
+            ],
         },
     ];
 
@@ -237,7 +254,7 @@ export default function AppointmentsManagementPage() {
             align: "right",
             valueGetter: (params) => {
                 const appointment = params.row;
-                return appointment?.clientName ?? "לא ידוע";
+                return appointment?.clientName ?? UNKNOWN_INFO_PLACEHOLDER;
             },
         },
         {
@@ -246,7 +263,7 @@ export default function AppointmentsManagementPage() {
             align: "right",
             valueGetter: (params) => {
                 const appointment = params.row;
-                return appointment?.clientPhoneNumber ?? "לא ידוע";
+                return appointment?.clientPhoneNumber ? formatPhoneNumberForDisplay(appointment.clientPhoneNumber) : UNKNOWN_INFO_PLACEHOLDER;
             },
         },
         {
@@ -255,7 +272,7 @@ export default function AppointmentsManagementPage() {
             align: "right",
             valueGetter: (params) => {
                 const service = params.row.service;
-                return service?.name || "לא ידוע";
+                return service?.name || UNKNOWN_INFO_PLACEHOLDER;
             },
         },
         {
@@ -263,7 +280,7 @@ export default function AppointmentsManagementPage() {
             headerName: "מחיר",
             valueGetter: (params) => {
                 const service = params.row.service;
-                return service?.price ? `₪${service.price}` : "לא ידוע";
+                return service?.price >= 0 ? `₪${service.price}` : DELETED_SERVICE_DATA_PLACEHOLDER;
             },
             align: "right",
         },
@@ -272,7 +289,7 @@ export default function AppointmentsManagementPage() {
             headerName: "זמן",
             valueGetter: (params) => {
                 const service = params.row.service;
-                return service?.duration_minutes ? `${service.duration_minutes} דקות` : "לא ידוע";
+                return service?.duration_minutes >= 0 ? `${service.duration_minutes} דקות` : DELETED_SERVICE_DATA_PLACEHOLDER;
             },
             align: "right",
         },
@@ -282,7 +299,7 @@ export default function AppointmentsManagementPage() {
             align: "right",
             valueGetter: (params) => {
                 const barber = params.row.barber;
-                return barber?.firstName ? `${barber.firstName} ${barber.lastName}` : "לא ידוע";
+                return barber?.firstName ? `${barber.firstName} ${barber.lastName}` : UNKNOWN_INFO_PLACEHOLDER;
             },
         },
     ];
@@ -292,7 +309,7 @@ export default function AppointmentsManagementPage() {
         clientPhoneNumber: '',
         date: selectedDate,
         time: "",
-        serviceId: services[0]?.id,
+        serviceId: services.find((service) => !service.suspended)?.id,
         barberId: barbers[0]?.id,
     };
 
@@ -307,7 +324,7 @@ export default function AppointmentsManagementPage() {
                 </div>
                 <div className="flex items-center space-x-4">
                     <label htmlFor="date" className="text-sm font-medium text-gray-700">
-                        Select Date:
+                        שינוי תאריך:
                     </label>
                     <input
                         type="date"
@@ -349,11 +366,13 @@ export default function AppointmentsManagementPage() {
                 onAdd={handleAdd}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                deleteText="ביטול תור"
                 columns={appointmentColumns}
                 getDetails={getAppointmentDetails}
                 initialFormData={initialFormData}
                 dialogTitle="תור"
             />
+            {ConfirmDialog}
         </div>
     );
 }

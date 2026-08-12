@@ -80,7 +80,7 @@ export default function BookPage() {
                     Service.getAll(),
                     Barber.getAll()
                 ]);
-                setServices(servicesData);
+                setServices(servicesData.filter((service) => !service.suspended));
                 setBarbers(barbersData);
 
                 // Get user data from cookies
