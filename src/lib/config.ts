@@ -6,4 +6,5 @@ export const Config = {
    otpLength: 6,
    devSkipOtp: process.env.NODE_ENV !== 'production' && process.env.DEV_SKIP_OTP === 'true',
    devOtpCode: process.env.DEV_OTP_CODE ?? '000000',
+   removedServiceId: 'removed-service',
 } as const;

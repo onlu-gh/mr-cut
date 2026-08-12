@@ -20,6 +20,7 @@ import { BroadcastMessage } from '@/entities/BroadcastMessage';
 import ManagementSection from '@/components/ManagementSection';
 import BackToManagementButton from '@/components/BackToManagementButton';
 import ManagementDialog from '@/components/ManagementDialog';
+import useConfirm from '@/components/useConfirm';
 import { getTranslations } from '@/translations';
 
 const t = getTranslations(true);
@@ -32,6 +33,7 @@ export default function BroadcastManagementPage() {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [confirm, ConfirmDialog] = useConfirm();
   const [messages, setMessages] = useState([]);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -103,15 +105,20 @@ export default function BroadcastManagementPage() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('האם למחוק את ההודעה?')) {
-      try {
-        const message = new BroadcastMessage({ id });
-        await message.delete();
-        await loadMessages();
-      } catch (error) {
-        setError('Failed to delete broadcast message');
-      }
-    }
+    confirm({
+      message: 'אתם בטוחים שברצונכם למחוק את ההודעה?',
+      successMessage: 'ההודעה נמחקה בהצלחה',
+      onConfirm: async () => {
+        try {
+          const message = new BroadcastMessage({ id });
+          await message.delete();
+          await loadMessages();
+        } catch (error) {
+          setError('Failed to delete broadcast message');
+          throw error;
+        }
+      },
+    });
   };
 
   const handleToggleActive = async (item) => {
@@ -328,7 +335,7 @@ export default function BroadcastManagementPage() {
         fields={messageFields}
         onEdit={editingOrder ? null : handleEdit}
         onDelete={handleDelete}
-        canDelete={() => !editingOrder}
+        preventDelete={() => editingOrder}
         columns={activeColumns}
         getDetails={getMessageDetails}
         initialFormData={initialFormData}
@@ -342,7 +349,6 @@ export default function BroadcastManagementPage() {
         fields={messageFields}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        canDelete={() => true}
         columns={inactiveColumns}
         getDetails={getMessageDetails}
         initialFormData={initialFormData}
@@ -370,6 +376,7 @@ export default function BroadcastManagementPage() {
           </Button>
         }
       />
+      {ConfirmDialog}
     </Box>
   );
 }

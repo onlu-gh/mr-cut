@@ -26,6 +26,7 @@ import Cookies from "js-cookie";
 import {usePathname, useRouter} from "next/navigation";
 import {getTranslations} from "@/translations";
 import CookieConsent from "@/components/CookieConsent";
+import useConfirm from "@/components/useConfirm";
 import {clearConsent, enforceCookieVersions} from "@/lib/cookieConsent";
 
 export default function ClientLayout({children}) {
@@ -39,6 +40,7 @@ export default function ClientLayout({children}) {
     const [isLoading, setIsLoading] = useState(true);
     const [navigation, setNavigation] = useState([]);
     const [navigating, setNavigating] = useState(false);
+    const [confirm, ConfirmDialog] = useConfirm();
 
     // Layout survives route changes, so the loader must be cleared once the new page is in.
     useEffect(() => {
@@ -99,6 +101,15 @@ export default function ClientLayout({children}) {
         clearConsent();
         setCurrentUser(null);
         router.push("/");
+    };
+
+    // User-initiated logout (button clicks) — confirm first. The automatic
+    // logout on auth failure calls handleLogout directly, without a prompt.
+    const confirmLogout = () => {
+        confirm({
+            message: 'אתם בטוחים שברצונכם להתנתק?',
+            onConfirm: handleLogout,
+        });
     };
 
     const t = getTranslations(isHebrew);
@@ -229,7 +240,7 @@ export default function ClientLayout({children}) {
                                 ))}
 
                                 <Button
-                                    onClick={handleLogout}
+                                    onClick={confirmLogout}
                                     sx={{
                                         color: 'white',
                                         '&:hover': {color: '#AFBFAD'},
@@ -425,8 +436,8 @@ export default function ClientLayout({children}) {
                         ))}
                         <ListItem
                             onClick={() => {
-                                handleLogout();
                                 setMobileMenuOpen(false);
+                                confirmLogout();
                             }}
                             sx={{
                                 textAlign: 'right',
@@ -443,6 +454,7 @@ export default function ClientLayout({children}) {
                     </List>
                 </Drawer>
             }
+            {ConfirmDialog}
         </Box>
     );
 } 

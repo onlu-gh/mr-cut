@@ -12,11 +12,17 @@ import {Service} from '@/entities/Service';
 import {getTranslations} from '@/translations';
 import {Barber} from "@/entities/Barber";
 import {isAppointmentWithin30Minutes} from '@/utils';
+import {formatPhoneNumberForDisplay} from '@/components/PhoneNumberField';
+import useConfirm from '@/components/useConfirm';
 
 const t = getTranslations(true);
 
+const UNKNOWN_INFO_PLACEHOLDER = "לא ידוע";
+const DELETED_SERVICE_DATA_PLACEHOLDER = "-";
+
 export default function CustomerAppointmentsManagementPage() {
     const router = useRouter();
+    const [confirm, ConfirmDialog] = useConfirm();
     const [appointments, setAppointments] = useState([]);
     const [services, setServices] = useState([]);
     const [barbers, setBarbers] = useState([]);
@@ -77,16 +83,21 @@ export default function CustomerAppointmentsManagementPage() {
     }, [loadAppointments, router]);
 
     const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to cancel this appointment?")) {
-            try {
-                const appointment = new Appointment({id});
-                await appointment.delete(true);
+        confirm({
+            message: "אתם בטוחים שברצונכם לבטל את התור?",
+            successMessage: "התור בוטל בהצלחה",
+            onConfirm: async () => {
+                try {
+                    const appointment = new Appointment({id});
+                    await appointment.delete(true);
 
-                await loadAppointments();
-            } catch (error) {
-                setError("Failed to cancel appointment");
-            }
-        }
+                    await loadAppointments();
+                } catch (error) {
+                    setError("Failed to cancel appointment");
+                    throw error;
+                }
+            },
+        });
     };
 
     const buildCalendarEvent = (appointment) => buildAppointmentEvent({
@@ -130,35 +141,35 @@ export default function CustomerAppointmentsManagementPage() {
             },
             {
                 label: "טלפון לקוח",
-                value: appointment.clientPhoneNumber,
+                value: formatPhoneNumberForDisplay(appointment.clientPhoneNumber),
             },
             {
                 label: "ספר",
                 value: appointment.barber?.firstName
                     ? `${appointment.barber.firstName} ${appointment.barber.lastName}`
-                    : "לא ידוע",
+                    : UNKNOWN_INFO_PLACEHOLDER,
             },
             {
                 label: "שירות",
-                value: appointment.service?.name || "לא ידוע",
+                value: appointment.service?.name || UNKNOWN_INFO_PLACEHOLDER,
             },
             {
                 label: "זמן",
-                value: appointment.service?.duration_minutes
+                value: appointment.service?.duration_minutes >= 0
                     ? `${appointment.service.duration_minutes} דקות `
-                    : "לא ידוע",
+                    : DELETED_SERVICE_DATA_PLACEHOLDER,
             },
             {
                 label: "מחיר",
-                value: appointment.service?.price
+                value: appointment.service?.price >= 0
                     ? `₪${appointment.service.price}`
-                    : "לא ידוע",
+                    : DELETED_SERVICE_DATA_PLACEHOLDER,
             },
             {
                 label: "סטטוס",
                 value: appointment.status
                     ? appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)
-                    : "לא ידוע",
+                    : DELETED_SERVICE_DATA_PLACEHOLDER,
             }
         ];
     };
@@ -228,7 +239,7 @@ export default function CustomerAppointmentsManagementPage() {
             align: "right",
             valueGetter: (params) => {
                 const appointment = params.row;
-                return appointment?.clientName ?? "לא ידוע";
+                return appointment?.clientName ?? UNKNOWN_INFO_PLACEHOLDER;
             },
         },
         {
@@ -237,7 +248,7 @@ export default function CustomerAppointmentsManagementPage() {
             align: "right",
             valueGetter: (params) => {
                 const appointment = params.row;
-                return appointment?.clientPhoneNumber ?? "לא ידוע";
+                return appointment?.clientPhoneNumber ? formatPhoneNumberForDisplay(appointment.clientPhoneNumber) : UNKNOWN_INFO_PLACEHOLDER;
             },
         },
         {
@@ -246,7 +257,7 @@ export default function CustomerAppointmentsManagementPage() {
             align: "right",
             valueGetter: (params) => {
                 const service = params.row.service;
-                return service?.name || "לא ידוע";
+                return service?.name || UNKNOWN_INFO_PLACEHOLDER;
             },
         },
         {
@@ -254,7 +265,7 @@ export default function CustomerAppointmentsManagementPage() {
             headerName: "מחיר",
             valueGetter: (params) => {
                 const service = params.row.service;
-                return service?.price ? `₪${service.price}` : "לא ידוע";
+                return service?.price >= 0 ? `₪${service.price}` : DELETED_SERVICE_DATA_PLACEHOLDER;
             },
             align: "right",
         },
@@ -263,7 +274,7 @@ export default function CustomerAppointmentsManagementPage() {
             headerName: "זמן",
             valueGetter: (params) => {
                 const service = params.row.service;
-                return service?.duration_minutes ? `${service.duration_minutes} דקות` : "לא ידוע";
+                return service?.duration_minutes >= 0 ? `${service.duration_minutes} דקות` : DELETED_SERVICE_DATA_PLACEHOLDER;
             },
             align: "right",
         },
@@ -273,7 +284,7 @@ export default function CustomerAppointmentsManagementPage() {
             align: "right",
             valueGetter: (params) => {
                 const barber = params.row.barber;
-                return barber?.firstName ? `${barber.firstName} ${barber.lastName}` : "לא ידוע";
+                return barber?.firstName ? `${barber.firstName} ${barber.lastName}` : UNKNOWN_INFO_PLACEHOLDER;
             },
         },
     ];
@@ -307,7 +318,7 @@ export default function CustomerAppointmentsManagementPage() {
                 title=""
                 items={appointments}
                 fields={appointmentFields}
-                canDelete={(appointment) => !isAppointmentWithin30Minutes(appointment)}
+                preventDelete={(appointment) => isAppointmentWithin30Minutes(appointment)}
                 onDelete={handleDelete}
                 deleteText={'ביטול תור'}
                 cannotDeleteText={"לא ניתן לבצע ביטול פחות מחצי שעה ממועד התור, נא צרו קשר עם המספרה"}
@@ -317,6 +328,7 @@ export default function CustomerAppointmentsManagementPage() {
                 renderItemActions={renderAppointmentActions}
                 dialogTitle="תור"
             />
+            {ConfirmDialog}
         </div>
     );
 }

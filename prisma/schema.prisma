@@ -57,6 +57,7 @@ model Service {
   name             String
   duration_minutes Int
   price            Float
+  suspended        Boolean       @default(false)
   created_at       DateTime      @default(now())
   updated_at       DateTime      @updatedAt
   appointments     Appointment[]

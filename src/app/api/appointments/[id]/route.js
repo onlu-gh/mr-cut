@@ -1,4 +1,5 @@
 import {NextResponse} from 'next/server';
+import {cookies} from 'next/headers';
 import {prisma} from '@/lib/prisma';
 import {MessagingService} from '@/services/messaging.service';
 import {Appointment} from '@/entities/Appointment';
@@ -77,7 +78,17 @@ export async function DELETE(request, {params}) {
     try {
         const {id} = await params;
         const {isDeletedByClient} = await request.json();
-        const appointment = new Appointment(await prisma.appointment.findUnique({
+
+        // Derive the caller's role from the auth cookie instead of trusting the
+        // client-supplied isDeletedByClient flag. NOTE: userData is currently an
+        // unsigned/forgeable cookie — this stops flag-flipping but not forged-cookie
+        // impersonation; the pending signed-session/JWT fix closes that.
+        const userDataCookie = (await cookies()).get('userData')?.value;
+        const callerId = userDataCookie ? JSON.parse(decodeURI(userDataCookie)).id : undefined;
+        const caller = callerId ? await prisma.user.findUnique({where: {id: callerId}}) : null;
+        const isManagement = caller?.role === 'ADMIN' || caller?.role === 'BARBER';
+
+        const record = await prisma.appointment.findUnique({
             where: {id},
             include: {
                 barber: {
@@ -86,17 +97,28 @@ export async function DELETE(request, {params}) {
                     }
                 }
             }
-        }));
+        });
+
+        if (record == null) {
+            return NextResponse.json({error: 'Appointment not found'}, {status: 404});
+        }
+
+        const appointment = new Appointment(record);
+
+        // Clients cannot cancel within 30 minutes of the appointment; enforce server-side.
+        // Management (admin/barber) bypass the window.
+        if (!isManagement && isAppointmentWithin30Minutes(appointment)) {
+            return NextResponse.json(
+                {error: 'לא ניתן לבצע ביטול פחות מחצי שעה ממועד התור, נא צרו קשר עם המספרה'},
+                {status: 403}
+            );
+        }
 
         await prisma.appointment.delete({
             where: {id}
         });
 
-        if (isDeletedByClient && appointment != null) {
-            if (isAppointmentWithin30Minutes(appointment)) {
-                throw new Error('');
-            }
-
+        if (isDeletedByClient) {
             void MessagingService.sendAppointmentCancellationNotification(appointment).catch(() => (
                 console.error('Error sending cancellation whatsapp notification to barber. appointmentId: ', appointment.id)
             ));
